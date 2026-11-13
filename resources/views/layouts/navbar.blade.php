@@ -154,7 +154,7 @@
 
                 {{-- Wishlist (auth) --}}
                 @auth
-                    @php $wishlistCount = auth()->user()->wishlists()->count(); @endphp
+                    @php $wishlistCount = count(auth()->user()->wishlistedBookIds()); @endphp
                     <a href="{{ route('wishlist.index') }}" class="relative p-2.5 text-gray-600 hover:text-[#0f2255] hover:bg-gray-100 rounded-lg transition-colors hidden sm:flex items-center gap-1.5" title="Buku Favorit">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
@@ -257,7 +257,7 @@
                 </a>
 
                 {{-- Kategori mega-dropdown --}}
-                @php $navCategories = \App\Models\Category::orderBy('name')->get(); @endphp
+                @php $navCategories = \App\Models\Category::withCount('books')->orderBy('name')->get(); @endphp
                 <div x-data="{ open: false }" class="relative h-full flex items-center" @mouseenter="open = true" @mouseleave="open = false">
                     <button class="flex items-center gap-1 px-3 h-full text-sm font-medium text-gray-600 hover:text-[#0f2255] border-b-2 border-transparent hover:border-[#0f2255] transition-all">
                         Kategori
@@ -267,7 +267,7 @@
                         @foreach($navCategories as $cat)
                             <a href="{{ route('books.index', ['category' => $cat->slug]) }}" class="flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 hover:bg-[#f5f1ea] hover:text-[#0f2255] transition-colors group">
                                 <span>{{ $cat->name }}</span>
-                                <span class="text-xs text-gray-400 group-hover:text-[#e05c1a] transition-colors">{{ $cat->books()->count() }}</span>
+                                <span class="text-xs text-gray-400 group-hover:text-[#e05c1a] transition-colors">{{ $cat->books_count }}</span>
                             </a>
                         @endforeach
                         <div class="border-t border-gray-100 mt-1 pt-1">

@@ -198,7 +198,7 @@
                     {{-- Wishlist Toggle Button --}}
                     @auth
                         @php
-                            $isWishlisted = auth()->user()->wishlists()->where('book_id', $book->id)->exists();
+                            $isWishlisted = auth()->user()->hasWishlisted($book->id);
                         @endphp
                         <form method="POST" action="{{ route('wishlist.toggle', $book) }}">
                             @csrf

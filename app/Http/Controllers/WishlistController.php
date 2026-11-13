@@ -54,7 +54,7 @@ class WishlistController extends Controller
      */
     public function index(Request $request): View
     {
-        $wishlistItems = Wishlist::with(['book.category'])
+        $wishlistItems = Wishlist::with(['book' => fn ($query) => $query->forCards()])
             ->where('user_id', $request->user()->id)
             ->latest()
             ->paginate(12);

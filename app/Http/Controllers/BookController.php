@@ -16,7 +16,7 @@ class BookController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Book::with('category');
+        $query = Book::forCards();
 
         if ($request->filled('search')) {
             $term = '%'.$request->search.'%';
@@ -50,7 +50,7 @@ class BookController extends Controller
         ($sortOptions[$sort] ?? $sortOptions['newest'])($query);
 
         $books = $query->paginate(16)->withQueryString();
-        $categories = Category::orderBy('name')->get();
+        $categories = Category::withCount('books')->orderBy('name')->get();
 
         return view('books.index', compact('books', 'categories', 'sort'));
     }
@@ -59,7 +59,8 @@ class BookController extends Controller
     {
         $book = Book::with(['category', 'reviews.user'])->where('slug', $slug)->firstOrFail();
 
-        $related = Book::where('category_id', $book->category_id)
+        $related = Book::forCards()
+            ->where('category_id', $book->category_id)
             ->where('id', '!=', $book->id)
             ->inStock()
             ->limit(4)

@@ -6,7 +6,7 @@
     <div class="relative overflow-hidden">
         {{-- Wishlist toggle — top-left overlay on the cover --}}
         @auth
-            @php $isCardWishlisted = auth()->user()->wishlists()->where('book_id', $book->id)->exists(); @endphp
+            @php $isCardWishlisted = auth()->user()->hasWishlisted($book->id); @endphp
             <form method="POST" action="{{ route('wishlist.toggle', $book) }}" class="absolute top-2.5 left-2.5 z-20">
                 @csrf
                 <button

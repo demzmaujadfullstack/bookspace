@@ -57,6 +57,15 @@ class Book extends Model
         return $query->where('stock', '>', 0);
     }
 
+    /** Data yang dibutuhkan komponen x-book-card, supaya tidak ada query per kartu. */
+    public function scopeForCards(Builder $query): Builder
+    {
+        return $query
+            ->with('category')
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews');
+    }
+
     /** Harga akhir setelah diskon persen, dibulatkan ke ratusan rupiah. */
     public function finalPrice(): int
     {
@@ -88,7 +97,13 @@ class Book extends Model
 
     public function averageRating(): float
     {
-        return round((float) $this->reviews()->avg('rating'), 1);
+        // NULL artinya buku ini belum dinilai, bukan datanya belum dimuat —
+        // jadi cek keberadaan kolomnya, bukan kekosongan nilainya.
+        $avg = array_key_exists('reviews_avg_rating', $this->attributes)
+            ? $this->reviews_avg_rating
+            : $this->reviews()->avg('rating');
+
+        return round((float) $avg, 1);
     }
 
     /** Eksemplar terjual pada transaksi yang pembayarannya sudah dikonfirmasi. */

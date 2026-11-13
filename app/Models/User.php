@@ -19,6 +19,9 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
+    /** @var list<int>|null */
+    private ?array $wishlistedBookIdsCache = null;
+
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
@@ -52,6 +55,21 @@ class User extends Authenticatable
     public function wishlists(): HasMany
     {
         return $this->hasMany(Wishlist::class);
+    }
+
+    /**
+     * ID buku yang disukai, diambil sekali dan di-memo sepanjang request.
+     *
+     * @return list<int>
+     */
+    public function wishlistedBookIds(): array
+    {
+        return $this->wishlistedBookIdsCache ??= $this->wishlists()->pluck('book_id')->map(fn ($id) => (int) $id)->all();
+    }
+
+    public function hasWishlisted(int $bookId): bool
+    {
+        return in_array($bookId, $this->wishlistedBookIds(), true);
     }
 
     /**
