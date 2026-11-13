@@ -1,0 +1,286 @@
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        background-color: #fafaf8;
+        color: #1c1c1c;
+    }
+
+    .font-serif-display {
+        font-family: 'Lora', Georgia, serif;
+    }
+
+    /* Legacy support */
+    .font-display {
+        font-family: 'Lora', Georgia, serif;
+    }
+
+    h1, h2, h3 {
+        letter-spacing: -0.01em;
+    }
+}
+
+@layer components {
+    /* ─── Book Card ─────────────────────────── */
+    .book-card {
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .book-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .book-card:hover .book-cover {
+        transform: scale(1.03);
+    }
+
+    /* ─── Carousel ──────────────────────────── */
+    .carousel-slide {
+        display: none;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+    }
+
+    .carousel-slide.active {
+        display: flex;
+        opacity: 1;
+    }
+
+    /* ─── Section Heading Style ─────────────── */
+    .section-heading {
+        font-family: 'Lora', Georgia, serif;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: #0f2255;
+    }
+
+    .section-eyebrow {
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #e05c1a;
+    }
+
+    /* ─── Pill / Badge ──────────────────────── */
+    .badge-discount {
+        font-size: 0.6875rem;
+        font-weight: 700;
+        line-height: 1;
+        background: #e05c1a;
+        color: #fff;
+        padding: 2px 7px;
+        border-radius: 3px;
+    }
+
+    .badge-sold-out {
+        font-size: 0.6875rem;
+        font-weight: 600;
+        background: #4b5563;
+        color: #fff;
+        padding: 2px 7px;
+        border-radius: 3px;
+    }
+
+    /* ─── Buttons ───────────────────────────── */
+    .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        background-color: #0f2255;
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.875rem;
+        padding: 0.6rem 1.4rem;
+        border-radius: 6px;
+        transition: background-color 0.15s ease;
+    }
+
+    .btn-primary:hover {
+        background-color: #1a3380;
+    }
+
+    .btn-orange {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        background-color: #e05c1a;
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.875rem;
+        padding: 0.6rem 1.4rem;
+        border-radius: 6px;
+        transition: background-color 0.15s ease;
+    }
+
+    .btn-orange:hover {
+        background-color: #c54e12;
+    }
+
+    .btn-outline {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        background: transparent;
+        color: #0f2255;
+        font-weight: 600;
+        font-size: 0.875rem;
+        padding: 0.55rem 1.4rem;
+        border-radius: 6px;
+        border: 1.5px solid #0f2255;
+        transition: all 0.15s ease;
+    }
+
+    .btn-outline:hover {
+        background-color: #0f2255;
+        color: #fff;
+    }
+
+    /* ─── Line Clamp ────────────────────────── */
+    .line-clamp-2 {
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
+    .line-clamp-3 {
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+    }
+
+    /* ─── Category Chip ─────────────────────── */
+    .category-chip {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem;
+        background: #fff;
+        border: 1px solid #e8e6e0;
+        border-radius: 10px;
+        text-align: center;
+        transition: border-color 0.15s, box-shadow 0.15s;
+        text-decoration: none;
+    }
+
+    .category-chip:hover {
+        border-color: #e05c1a;
+        box-shadow: 0 4px 16px rgba(224, 92, 26, 0.12);
+    }
+
+    /* ─── Divider ornament ──────────────────── */
+    .divider-ornament {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        color: #c8bfb0;
+    }
+
+    .divider-ornament::before,
+    .divider-ornament::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: #e8e6e0;
+    }
+}
+
+@layer utilities {
+    .text-navy {
+        color: #0f2255;
+    }
+
+    .bg-navy {
+        background-color: #0f2255;
+    }
+
+    .text-orange-brand {
+        color: #e05c1a;
+    }
+
+    .bg-cream {
+        background-color: #faf8f4;
+    }
+
+    .bg-parchment {
+        background-color: #f5f1ea;
+    }
+}
+
+/* ─── Print Styles for Invoice Receipt ───────────────────────── */
+@media print {
+    /* Hide navigation, header, footer, interactive buttons */
+    nav,
+    header,
+    footer,
+    aside,
+    button,
+    .no-print,
+    [x-data*="open"],
+    [x-data*="searchOpen"] {
+        display: none !important;
+    }
+
+    body {
+        background-color: #fff !important;
+        color: #000 !important;
+        font-size: 11pt;
+        line-height: 1.4;
+    }
+
+    .max-w-3xl,
+    .max-w-4xl {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .bg-white {
+        background: transparent !important;
+    }
+
+    .border,
+    .border-b,
+    .border-t {
+        border-color: #ccc !important;
+    }
+
+    .shadow-sm,
+    .shadow-md,
+    .shadow-xl {
+        box-shadow: none !important;
+    }
+
+    /* Keep table crisp and readable */
+    table {
+        width: 100% !important;
+        page-break-inside: avoid;
+    }
+
+    tr {
+        page-break-inside: avoid;
+    }
+
+    @page {
+        size: A4;
+        margin: 1.5cm;
+    }
+}
