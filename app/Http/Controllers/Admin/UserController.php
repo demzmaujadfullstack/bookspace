@@ -42,6 +42,11 @@ class UserController extends Controller
         }
 
         $name = $user->name;
+
+        if ($user->orders()->exists()) {
+            return back()->with('error', "Akun '{$name}' masih punya riwayat pesanan, jadi tidak bisa dihapus.");
+        }
+
         $user->delete();
 
         return back()->with('success', "Pengguna '{$name}' berhasil dihapus.");

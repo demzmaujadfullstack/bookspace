@@ -159,8 +159,8 @@
                     @if($order->latestPayment->proof_image)
                         <div>
                             <span class="text-gray-400 uppercase tracking-wider text-[10px] font-bold block mb-1">Bukti Transfer yang Diunggah</span>
-                            <a href="{{ asset('storage/' . $order->latestPayment->proof_image) }}" target="_blank" class="inline-block border border-[#dcd8cd] rounded-xl p-1 hover:border-[#0f2255] transition-colors shadow-sm">
-                                <img src="{{ asset('storage/' . $order->latestPayment->proof_image) }}" alt="Bukti Transfer" class="w-24 h-24 object-cover rounded-lg">
+                            <a href="{{ route('payment.proof', $order->latestPayment) }}" target="_blank" class="inline-block border border-[#dcd8cd] rounded-xl p-1 hover:border-[#0f2255] transition-colors shadow-sm">
+                                <img src="{{ route('payment.proof', $order->latestPayment) }}" alt="Bukti Transfer" class="w-24 h-24 object-cover rounded-lg">
                             </a>
                         </div>
                     @endif

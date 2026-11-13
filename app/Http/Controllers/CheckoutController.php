@@ -159,7 +159,7 @@ class CheckoutController extends Controller
             'proof_image.max' => 'Ukuran gambar maksimal 3MB.',
         ]);
 
-        $path = $request->file('proof_image')->store('payments', 'public');
+        $path = $request->file('proof_image')->store('payments', 'local');
 
         $payment = $order->latestPayment ?? new Payment(['order_id' => $order->id, 'method' => 'transfer', 'amount' => $order->total]);
         $payment->proof_image = $path;

@@ -119,15 +119,22 @@ document.addEventListener('DOMContentLoaded', () => {
     function appendMessage(body, time, isMe, senderName) {
         const wrap = document.createElement('div');
         wrap.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
-        wrap.innerHTML = `
-            <div class="flex items-center gap-2 mb-1">
-                <span class="text-[10px] font-bold text-gray-600">${senderName}</span>
-                <span class="text-[10px] text-gray-400 font-mono">${time}</span>
-            </div>
-            <div class="max-w-[78%] rounded-2xl px-4 py-2.5 text-xs sm:text-sm leading-relaxed shadow-sm ${isMe ? 'bg-[#0f2255] text-white rounded-tr-none' : 'bg-white border border-[#e8e6df] text-gray-900 rounded-tl-none font-sans'}">
-                ${body}
-            </div>
-        `;
+
+        const meta = document.createElement('div');
+        meta.className = 'flex items-center gap-2 mb-1';
+        const name = document.createElement('span');
+        name.className = 'text-[10px] font-bold text-gray-600';
+        name.textContent = senderName;
+        const stamp = document.createElement('span');
+        stamp.className = 'text-[10px] text-gray-400 font-mono';
+        stamp.textContent = time;
+        meta.append(name, stamp);
+
+        const bubble = document.createElement('div');
+        bubble.className = `max-w-[78%] rounded-2xl px-4 py-2.5 text-xs sm:text-sm leading-relaxed shadow-sm ${isMe ? 'bg-[#0f2255] text-white rounded-tr-none' : 'bg-white border border-[#e8e6df] text-gray-900 rounded-tl-none font-sans'}`;
+        bubble.textContent = body;
+
+        wrap.append(meta, bubble);
         container.appendChild(wrap);
     }
 

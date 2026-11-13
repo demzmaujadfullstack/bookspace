@@ -177,7 +177,7 @@
                         <div>
                             <span class="text-gray-400 text-[10px] uppercase font-semibold block mb-2">Bukti Transfer</span>
                             <div class="border border-gray-200 rounded-xl overflow-hidden cursor-pointer" @click="imgModal = true">
-                                <img src="{{ asset('storage/' . $payment->proof_image) }}" alt="Bukti Transfer" class="w-full h-44 object-cover hover:scale-105 transition-transform">
+                                <img src="{{ route('payment.proof', $payment) }}" alt="Bukti Transfer" class="w-full h-44 object-cover hover:scale-105 transition-transform">
                             </div>
                             <span class="text-[10px] text-gray-400 block text-center mt-1">Klik gambar untuk memperbesar</span>
                         </div>
@@ -248,7 +248,7 @@
             </div>
 
             <div class="p-4 bg-gray-950 flex-1 overflow-auto flex items-center justify-center min-h-[280px]">
-                <img src="{{ asset('storage/' . $payment->proof_image) }}" alt="Bukti Transfer Penuh" class="max-w-full max-h-[60vh] object-contain rounded-lg shadow-lg">
+                <img src="{{ route('payment.proof', $payment) }}" alt="Bukti Transfer Penuh" class="max-w-full max-h-[60vh] object-contain rounded-lg shadow-lg">
             </div>
 
             <div class="p-4 bg-white border-t border-[#e8e6df] flex flex-wrap items-center justify-between gap-3">

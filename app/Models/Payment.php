@@ -56,11 +56,6 @@ class Payment extends Model
         };
     }
 
-    public function proofUrl(): ?string
-    {
-        return $this->proof_image ? asset('storage/'.$this->proof_image) : null;
-    }
-
     /**
      * @return array<string, string>
      */

@@ -14,8 +14,7 @@ class ReportController extends Controller
 {
     public function index(Request $request): View
     {
-        $startDate = $request->filled('start_date') ? Carbon::parse($request->start_date)->startOfDay() : Carbon::now()->subDays(30)->startOfDay();
-        $endDate = $request->filled('end_date') ? Carbon::parse($request->end_date)->endOfDay() : Carbon::now()->endOfDay();
+        [$startDate, $endDate] = $this->range($request);
 
         $ordersQuery = Order::whereIn('status', Order::STOCK_REDUCED_STATUSES)
             ->whereBetween('created_at', [$startDate, $endDate]);
@@ -47,8 +46,7 @@ class ReportController extends Controller
 
     public function export(Request $request): StreamedResponse
     {
-        $startDate = $request->filled('start_date') ? Carbon::parse($request->start_date)->startOfDay() : Carbon::now()->subDays(30)->startOfDay();
-        $endDate = $request->filled('end_date') ? Carbon::parse($request->end_date)->endOfDay() : Carbon::now()->endOfDay();
+        [$startDate, $endDate] = $this->range($request);
 
         $orders = Order::with('user', 'latestPayment')
             ->whereIn('status', Order::STOCK_REDUCED_STATUSES)
@@ -69,15 +67,49 @@ class ReportController extends Controller
             foreach ($orders as $order) {
                 fputcsv($handle, [
                     $no++,
-                    $order->code,
-                    $order->recipient_name,
-                    $order->latestPayment?->methodLabel() ?? 'Manual',
+                    $this->csvSafe($order->code),
+                    $this->csvSafe($order->recipient_name),
+                    $this->csvSafe($order->latestPayment?->methodLabel() ?? 'Manual'),
                     $order->total,
                     $order->created_at->format('Y-m-d H:i:s'),
-                    $order->statusLabel(),
+                    $this->csvSafe($order->statusLabel()),
                 ]);
             }
             fclose($handle);
         }, 200, $headers);
+    }
+
+    /**
+     * @return array{0: Carbon, 1: Carbon}
+     */
+    private function range(Request $request): array
+    {
+        $validated = $request->validate([
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date'],
+        ]);
+
+        $startDate = isset($validated['start_date'])
+            ? Carbon::parse($validated['start_date'])->startOfDay()
+            : Carbon::now()->subDays(30)->startOfDay();
+
+        $endDate = isset($validated['end_date'])
+            ? Carbon::parse($validated['end_date'])->endOfDay()
+            : Carbon::now()->endOfDay();
+
+        return $startDate->lte($endDate)
+            ? [$startDate, $endDate]
+            : [$endDate->copy()->startOfDay(), $startDate->copy()->endOfDay()];
+    }
+
+    /**
+     * Sel yang diawali = + - @ dieksekusi Excel sebagai rumus, dan isinya
+     * berasal dari input bebas pembeli di form checkout.
+     */
+    private function csvSafe(?string $value): string
+    {
+        $value = (string) $value;
+
+        return preg_match('/^[=+\-@\t\r]/', $value) ? "'".$value : $value;
     }
 }

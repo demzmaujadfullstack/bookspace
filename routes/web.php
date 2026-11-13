@@ -14,6 +14,7 @@ use App\Http\Controllers\BookController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PaymentProofController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\User\HelpController;
 use App\Http\Controllers\User\OrderController;
@@ -25,7 +26,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/books', [BookController::class, 'index'])->name('books.index');
 Route::get('/books/{slug}', [BookController::class, 'show'])->name('books.show');
-Route::get('/api/search', [BookController::class, 'searchSuggest'])->name('books.search.suggest');
+Route::get('/api/search', [BookController::class, 'searchSuggest'])->middleware('throttle:30,1')->name('books.search.suggest');
 
 // Redirect for /dashboard
 Route::get('/dashboard', function () {
@@ -55,6 +56,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/checkout/{order}/success', [CheckoutController::class, 'success'])->name('checkout.success');
     Route::post('/checkout/{order}/cancel', [CheckoutController::class, 'cancel'])->name('checkout.cancel');
 
+    // Payment proof (private file, owner or admin only)
+    Route::get('/bukti-pembayaran/{payment}', [PaymentProofController::class, 'show'])->name('payment.proof');
+
     // User area
     Route::prefix('akun')->name('user.')->group(function () {
         Route::get('/', [UserProfileController::class, 'dashboard'])->name('dashboard');
@@ -69,8 +73,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [HelpController::class, 'index'])->name('index');
         Route::post('/conversations', [HelpController::class, 'startConversation'])->name('conversations.start');
         Route::get('/conversations/{conversation}', [HelpController::class, 'show'])->name('conversations.show');
-        Route::post('/conversations/{conversation}/messages', [HelpController::class, 'sendMessage'])->name('conversations.messages.store');
-        Route::get('/conversations/{conversation}/poll', [HelpController::class, 'poll'])->name('conversations.poll');
+        Route::post('/conversations/{conversation}/messages', [HelpController::class, 'sendMessage'])->middleware('throttle:20,1')->name('conversations.messages.store');
+        Route::get('/conversations/{conversation}/poll', [HelpController::class, 'poll'])->middleware('throttle:60,1')->name('conversations.poll');
     });
 });
 
@@ -115,9 +119,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Admin Chat
     Route::get('/chat', [AdminChatController::class, 'index'])->name('chat.index');
     Route::get('/chat/{conversation}', [AdminChatController::class, 'show'])->name('chat.show');
-    Route::post('/chat/{conversation}/messages', [AdminChatController::class, 'sendMessage'])->name('chat.messages.store');
+    Route::post('/chat/{conversation}/messages', [AdminChatController::class, 'sendMessage'])->middleware('throttle:20,1')->name('chat.messages.store');
     Route::patch('/chat/{conversation}/close', [AdminChatController::class, 'close'])->name('chat.close');
-    Route::get('/chat/{conversation}/poll', [AdminChatController::class, 'poll'])->name('chat.poll');
+    Route::get('/chat/{conversation}/poll', [AdminChatController::class, 'poll'])->middleware('throttle:60,1')->name('chat.poll');
 });
 
 require __DIR__.'/auth.php';

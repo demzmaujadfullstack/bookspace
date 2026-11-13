@@ -64,7 +64,7 @@ class ChatController extends Controller
                 'success' => true,
                 'message' => [
                     'id' => $message->id,
-                    'body' => e($message->body),
+                    'body' => $message->body,
                     'sender_name' => auth()->user()->name,
                     'is_me' => true,
                     'time' => $message->created_at->format('H:i'),
@@ -93,7 +93,7 @@ class ChatController extends Controller
             ->get()
             ->map(fn ($m) => [
                 'id' => $m->id,
-                'body' => e($m->body),
+                'body' => $m->body,
                 'sender_name' => $m->sender->name,
                 'is_me' => $m->sender_id === auth()->id(),
                 'time' => $m->created_at->format('H:i'),

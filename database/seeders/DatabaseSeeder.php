@@ -11,28 +11,26 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Admin user
-        User::updateOrCreate(
+        $admin = User::updateOrCreate(
             ['email' => 'admin@bookspace.id'],
             [
                 'name' => 'Admin BOOKSPACE',
-                'email' => 'admin@bookspace.id',
-                'password' => Hash::make('password'),
-                'role' => 'admin',
                 'phone' => '081234567890',
+                'password' => Hash::make('password'),
             ]
         );
+        $admin->forceFill(['role' => 'admin'])->save();
 
         // Demo user
-        User::updateOrCreate(
+        $reader = User::updateOrCreate(
             ['email' => 'user@bookspace.id'],
             [
                 'name' => 'Dimas Pratama',
-                'email' => 'user@bookspace.id',
-                'password' => Hash::make('password'),
-                'role' => 'user',
                 'phone' => '081298765432',
+                'password' => Hash::make('password'),
             ]
         );
+        $reader->forceFill(['role' => 'user'])->save();
 
         $this->call([
             SettingSeeder::class,
