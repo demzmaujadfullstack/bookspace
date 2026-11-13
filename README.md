@@ -8,50 +8,52 @@ BOOKSPACE adalah aplikasi e-commerce buku lengkap dengan dua sisi: **etalase pem
 
 ## 🖼️ Preview
 
-Seluruh tangkapan layar di bawah diambil langsung dari aplikasi yang berjalan (bukan mockup). Folder [`preview/`](./preview) berisi semua gambarnya.
+📸 **Semua screenshot:** [github.com/demzmaujadfullstack/bookspace/tree/main/preview](https://github.com/demzmaujadfullstack/bookspace/tree/main/preview)
+
+16 tangkapan layar ini diambil langsung dari aplikasi yang berjalan (bukan mockup/desain ulang). Klik gambar mana pun untuk membuka ukuran penuh, atau buka [folder `preview/`](https://github.com/demzmaujadfullstack/bookspace/tree/main/preview) untuk melihat semuanya sekaligus.
 
 ### Etalase Pembaca
 
 | Beranda | Katalog Buku |
 | --- | --- |
-| ![Beranda](./preview/01-beranda.png) | ![Katalog](./preview/02-katalog-buku.png) |
+| [![Beranda](./preview/01-beranda.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/01-beranda.png?raw=true) | [![Katalog](./preview/02-katalog-buku.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/02-katalog-buku.png?raw=true) |
 | Halaman depan dengan banner promo, kategori genre, dan rak buku terlaris. | Filter genre, rentang harga, buku diskon, dan pencarian judul/penulis/ISBN. |
 
 | Detail Buku | Keranjang |
 | --- | --- |
-| ![Detail Buku](./preview/03-detail-buku.png) | ![Keranjang](./preview/04-keranjang.png) |
+| [![Detail Buku](./preview/03-detail-buku.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/03-detail-buku.png?raw=true) | [![Keranjang](./preview/04-keranjang.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/04-keranjang.png?raw=true) |
 | Informasi bibliografi lengkap, harga coret, stok real-time, dan ulasan pembaca. | Ubah jumlah barang, subtotal, dan estimasi ongkir. |
 
 | Checkout | Daftar Favorit |
 | --- | --- |
-| ![Checkout](./preview/05-checkout.png) | ![Favorit](./preview/08-favorit.png) |
+| [![Checkout](./preview/05-checkout.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/05-checkout.png?raw=true) | [![Favorit](./preview/08-favorit.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/08-favorit.png?raw=true) |
 | Alamat pengiriman, metode pembayaran, dan unggah bukti transfer. | Simpan buku impian lewat tombol favorit di setiap halaman buku. |
 
 | Dashboard Pembaca | Pesanan Saya |
 | --- | --- |
-| ![Dashboard](./preview/06-dashboard-akun.png) | ![Pesanan](./preview/07-pesanan-saya.png) |
+| [![Dashboard](./preview/06-dashboard-akun.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/06-dashboard-akun.png?raw=true) | [![Pesanan](./preview/07-pesanan-saya.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/07-pesanan-saya.png?raw=true) |
 | Ringkasan aktivitas akun dan riwayat belanja. | Lacak status pesanan dari pembayaran hingga dikirim. |
 
 | Bantuan & Live Chat | Profil Akun |
 | --- | --- |
-| ![Bantuan](./preview/14-chat-bantuan.png) | ![Profil](./preview/15-profil-akun.png) |
+| [![Bantuan](./preview/14-chat-bantuan.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/14-chat-bantuan.png?raw=true) | [![Profil](./preview/15-profil-akun.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/15-profil-akun.png?raw=true) |
 | FAQ dan ngobrol langsung dengan tim admin. | Perbarui data diri dan alamat pengiriman. |
 
 ### Panel Admin
 
 | Dashboard Admin | Kelola Buku |
 | --- | --- |
-| ![Admin Dashboard](./preview/09-admin-dashboard.png) | ![Kelola Buku](./preview/10-admin-kelola-buku.png) |
+| [![Admin Dashboard](./preview/09-admin-dashboard.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/09-admin-dashboard.png?raw=true) | [![Kelola Buku](./preview/10-admin-kelola-buku.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/10-admin-kelola-buku.png?raw=true) |
 | Statistik omzet, kurva penjualan 30 hari, dan stok menipis. | Tambah, edit, dan hapus judul buku beserta cover. |
 
 | Transaksi | Laporan Penjualan |
 | --- | --- |
-| ![Transaksi](./preview/11-admin-transaksi.png) | ![Laporan](./preview/12-admin-laporan.png) |
+| [![Transaksi](./preview/11-admin-transaksi.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/11-admin-transaksi.png?raw=true) | [![Laporan](./preview/12-admin-laporan.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/12-admin-laporan.png?raw=true) |
 | Verifikasi bukti pembayaran dan ubah status pesanan. | Rekap penjualan dengan ekspor CSV. |
 
 | Chat Pelanggan | Halaman Masuk |
 | --- | --- |
-| ![Chat Admin](./preview/13-admin-chat.png) | ![Login](./preview/16-login.png) |
+| [![Chat Admin](./preview/13-admin-chat.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/13-admin-chat.png?raw=true) | [![Login](./preview/16-login.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/16-login.png?raw=true) |
 | Menjawab pertanyaan pembaca secara real-time. | Autentikasi dengan Laravel Breeze. |
 
 ---
