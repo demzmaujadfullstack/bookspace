@@ -95,7 +95,7 @@
                         <div class="flex items-center gap-4">
                             @if($item->book)
                                 <a href="{{ route('books.show', $item->book->slug) }}" class="w-12 h-16 rounded overflow-hidden shadow-sm bg-white shrink-0 border border-[#e8e6df] block">
-                                    <img src="{{ $item->book->coverUrl() }}" alt="{{ $item->book_title }}" class="w-full h-full object-cover">
+                                    <img src="{{ $item->book->coverUrl() }}" alt="{{ $item->book_title }}" class="w-full h-full object-cover" onerror="this.src='{{ asset('images/cover-placeholder.svg') }}'">
                                 </a>
                             @endif
                             <div>

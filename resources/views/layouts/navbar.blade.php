@@ -110,7 +110,7 @@
                     <div x-show="!loading && results.length > 0" class="overflow-y-auto divide-y divide-gray-100">
                         <template x-for="book in results" :key="book.id">
                             <a :href="book.url" class="flex items-center gap-3.5 p-3 hover:bg-[#fafaf8] transition-colors group">
-                                <img :src="book.cover_url" :alt="book.title" class="w-10 h-14 object-cover rounded shadow shrink-0 bg-gray-100 border border-gray-200">
+                                <img :src="book.cover_url" :alt="book.title" onerror="this.src='{{ asset('images/cover-placeholder.svg') }}'" class="w-10 h-14 object-cover rounded shadow shrink-0 bg-gray-100 border border-gray-200">
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center gap-2">
                                         <span x-show="book.category" x-text="book.category" class="text-[9px] font-bold uppercase tracking-wider text-[#e05c1a] bg-[#f4f2ec] px-1.5 py-0.5 rounded"></span>
@@ -257,7 +257,7 @@
                 </a>
 
                 {{-- Kategori mega-dropdown --}}
-                @php $navCategories = \App\Models\Category::withCount('books')->orderBy('name')->get(); @endphp
+                @php $navCategories = \App\Models\Category::navList(); @endphp
                 <div x-data="{ open: false }" class="relative h-full flex items-center" @mouseenter="open = true" @mouseleave="open = false">
                     <button class="flex items-center gap-1 px-3 h-full text-sm font-medium text-gray-600 hover:text-[#0f2255] border-b-2 border-transparent hover:border-[#0f2255] transition-all">
                         Kategori

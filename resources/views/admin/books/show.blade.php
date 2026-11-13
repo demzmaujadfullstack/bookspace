@@ -22,7 +22,7 @@
         <div class="grid md:grid-cols-4 gap-6">
             <div class="md:col-span-1">
                 <div class="aspect-[2/3] bg-gray-50 rounded-xl overflow-hidden border border-gray-100 shadow-sm">
-                    <img src="{{ $book->coverUrl() }}" alt="{{ $book->title }}" class="w-full h-full object-cover">
+                    <img src="{{ $book->coverUrl() }}" alt="{{ $book->title }}" class="w-full h-full object-cover" onerror="this.src='{{ asset('images/cover-placeholder.svg') }}'">
                 </div>
             </div>
             <div class="md:col-span-3 space-y-4 text-xs">

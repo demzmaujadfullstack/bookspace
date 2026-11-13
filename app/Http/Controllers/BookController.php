@@ -50,7 +50,7 @@ class BookController extends Controller
         ($sortOptions[$sort] ?? $sortOptions['newest'])($query);
 
         $books = $query->paginate(16)->withQueryString();
-        $categories = Category::withCount('books')->orderBy('name')->get();
+        $categories = Category::navList();
 
         return view('books.index', compact('books', 'categories', 'sort'));
     }

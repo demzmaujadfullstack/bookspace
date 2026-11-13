@@ -13,7 +13,7 @@ class SettingController extends Controller
 {
     public function edit(): View
     {
-        $settings = Setting::pluck('value', 'key');
+        $settings = Setting::values();
 
         return view('admin.settings.edit', compact('settings'));
     }

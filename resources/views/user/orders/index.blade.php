@@ -66,7 +66,7 @@
                         <div class="flex items-center gap-3.5 min-w-0">
                             @if($item->book)
                                 <div class="w-10 h-14 rounded overflow-hidden shadow-sm bg-white shrink-0 border border-[#e8e6df]">
-                                    <img src="{{ $item->book->coverUrl() }}" alt="{{ $item->book_title }}" class="w-full h-full object-cover">
+                                    <img src="{{ $item->book->coverUrl() }}" alt="{{ $item->book_title }}" class="w-full h-full object-cover" onerror="this.src='{{ asset('images/cover-placeholder.svg') }}'">
                                 </div>
                             @endif
                             <div class="min-w-0">

@@ -62,7 +62,7 @@
                     @forelse($books as $book)
                     <tr class="hover:bg-gray-50/50">
                         <td class="py-3">
-                            <img src="{{ $book->coverUrl() }}" alt="{{ $book->title }}" class="w-10 h-14 object-cover rounded-md border border-gray-100">
+                            <img src="{{ $book->coverUrl() }}" alt="{{ $book->title }}" class="w-10 h-14 object-cover rounded-md border border-gray-100" onerror="this.src='{{ asset('images/cover-placeholder.svg') }}'">
                         </td>
                         <td class="py-3 max-w-[220px]">
                             <p class="font-bold text-gray-900 text-xs truncate">{{ $book->title }}</p>

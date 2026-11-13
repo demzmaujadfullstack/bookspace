@@ -24,7 +24,7 @@ class HelpController extends Controller
             ->latest('last_message_at')
             ->get();
 
-        $settings = Setting::pluck('value', 'key');
+        $settings = Setting::values();
 
         $faqs = [
             [

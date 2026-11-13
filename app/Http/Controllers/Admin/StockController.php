@@ -13,7 +13,7 @@ class StockController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Book::with('category');
+        $query = Book::with('category')->withSoldCount();
 
         if ($request->filled('status')) {
             if ($request->status === 'habis') {
@@ -32,11 +32,18 @@ class StockController extends Controller
 
         $books = $query->orderBy('stock')->paginate(15)->withQueryString();
 
+        $row = Book::selectRaw('count(*) as total_books,
+                sum(case when stock = 0 then 1 else 0 end) as out_of_stock,
+                sum(case when stock > 0 and stock <= ? then 1 else 0 end) as low_stock,
+                sum(case when stock > ? then 1 else 0 end) as in_stock',
+            [Book::STOCK_LOW_THRESHOLD, Book::STOCK_LOW_THRESHOLD]
+        )->first();
+
         $stats = [
-            'total_books' => Book::count(),
-            'out_of_stock' => Book::where('stock', 0)->count(),
-            'low_stock' => Book::where('stock', '>', 0)->where('stock', '<=', Book::STOCK_LOW_THRESHOLD)->count(),
-            'in_stock' => Book::where('stock', '>', Book::STOCK_LOW_THRESHOLD)->count(),
+            'total_books' => (int) $row->total_books,
+            'out_of_stock' => (int) $row->out_of_stock,
+            'low_stock' => (int) $row->low_stock,
+            'in_stock' => (int) $row->in_stock,
         ];
 
         return view('admin.stock.index', compact('books', 'stats'));

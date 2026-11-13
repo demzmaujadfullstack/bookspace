@@ -429,7 +429,7 @@
             {{-- Modal Header --}}
             <div class="flex items-center justify-between p-6 pb-4 border-b border-[#e8e6df] bg-white">
                 <div class="flex items-center gap-3">
-                    <img src="{{ $book->coverUrl() }}" alt="{{ $book->title }}" class="w-10 h-14 object-cover rounded shadow-sm border border-gray-200">
+                    <img src="{{ $book->coverUrl() }}" alt="{{ $book->title }}" class="w-10 h-14 object-cover rounded shadow-sm border border-gray-200" onerror="this.src='{{ asset('images/cover-placeholder.svg') }}'">
                     <div>
                         <span class="text-[10px] font-bold uppercase tracking-widest text-[#e05c1a]">Cuplikan Bacaan Eksklusif</span>
                         <h3 class="font-serif-display font-bold text-lg text-[#0f2255] leading-tight">{{ $book->title }}</h3>

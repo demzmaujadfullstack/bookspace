@@ -33,7 +33,7 @@ class CheckoutController extends Controller
             }
         }
 
-        $settings = Setting::pluck('value', 'key');
+        $settings = Setting::values();
         $subtotal = $cart->items->sum(fn ($i) => $i->subtotal());
 
         return view('checkout.index', compact('cart', 'subtotal', 'settings', 'user'));
@@ -106,7 +106,7 @@ class CheckoutController extends Controller
             }
 
             // Create initial payment record
-            $settings = Setting::pluck('value', 'key');
+            $settings = Setting::values();
             Payment::create([
                 'order_id' => $order->id,
                 'method' => $validated['payment_method'],
@@ -137,7 +137,7 @@ class CheckoutController extends Controller
         }
 
         $payment = $order->latestPayment;
-        $settings = Setting::pluck('value', 'key');
+        $settings = Setting::values();
 
         return view('checkout.payment', compact('order', 'payment', 'settings'));
     }

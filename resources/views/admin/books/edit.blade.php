@@ -101,7 +101,7 @@
 
             <div class="mb-8 flex items-start gap-4">
                 <div class="w-20 h-28 bg-gray-50 border border-gray-100 rounded-xl overflow-hidden shrink-0">
-                    <img src="{{ $book->coverUrl() }}" alt="{{ $book->title }}" class="w-full h-full object-cover">
+                    <img src="{{ $book->coverUrl() }}" alt="{{ $book->title }}" class="w-full h-full object-cover" onerror="this.src='{{ asset('images/cover-placeholder.svg') }}'">
                 </div>
                 <div class="flex-1">
                     <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">Ganti Gambar Sampul (Opsional)</label>

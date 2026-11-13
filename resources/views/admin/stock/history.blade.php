@@ -14,7 +14,7 @@
 
     <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
         <div class="flex items-center gap-4 pb-4 border-b border-gray-100 mb-6">
-            <img src="{{ $book->coverUrl() }}" alt="{{ $book->title }}" class="w-12 h-16 object-cover rounded-lg border border-gray-100">
+            <img src="{{ $book->coverUrl() }}" alt="{{ $book->title }}" class="w-12 h-16 object-cover rounded-lg border border-gray-100" onerror="this.src='{{ asset('images/cover-placeholder.svg') }}'">
             <div>
                 <h1 class="font-display font-bold text-lg text-gray-900">{{ $book->title }}</h1>
                 <p class="text-xs text-gray-400 font-mono mt-0.5">ISBN: {{ $book->isbn }} • {{ $book->category->name ?? '-' }}</p>

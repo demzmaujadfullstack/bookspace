@@ -1,5 +1,5 @@
 ﻿<footer class="bg-[#0b1736] text-white/80 mt-20 border-t border-white/5 font-sans">
-    @php $settings = \App\Models\Setting::pluck('value', 'key'); @endphp
+    @php $settings = \App\Models\Setting::values(); @endphp
 
     {{-- ── Curated Newsletter Strip ───────────────────────────── --}}
     <div class="bg-[#12224d] border-b border-white/10">

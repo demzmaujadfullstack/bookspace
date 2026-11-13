@@ -128,7 +128,7 @@
     const slides = document.querySelectorAll('.carousel-slide');
     if (!slides.length) return;
     const dots = document.querySelectorAll('.carousel-dot');
-    const duration = {{ \App\Models\Setting::where('key','carousel_duration')->value('value') ?? 5000 }};
+    const duration = {{ (int) \App\Models\Setting::value('carousel_duration', 5000) ?: 5000 }};
     let current = 0, timer = null, paused = false;
 
     function goTo(n) {

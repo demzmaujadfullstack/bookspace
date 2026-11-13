@@ -33,16 +33,18 @@ class OrderController extends Controller
 
         $orders = $query->latest()->paginate(15)->withQueryString();
 
+        $countsByStatus = Order::selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status');
+
         $statusCounts = [
-            'all' => Order::count(),
-            'pending' => Order::where('status', Order::PENDING)->count(),
-            'menunggu_pembayaran' => Order::where('status', Order::MENUNGGU_PEMBAYARAN)->count(),
-            'menunggu_verifikasi' => Order::where('status', Order::MENUNGGU_VERIFIKASI)->count(),
-            'dibayar' => Order::where('status', Order::DIBAYAR)->count(),
-            'diproses' => Order::where('status', Order::DIPROSES)->count(),
-            'dikirim' => Order::where('status', Order::DIKIRIM)->count(),
-            'selesai' => Order::where('status', Order::SELESAI)->count(),
-            'dibatalkan' => Order::where('status', Order::DIBATALKAN)->count(),
+            'all' => (int) $countsByStatus->sum(),
+            'pending' => (int) ($countsByStatus[Order::PENDING] ?? 0),
+            'menunggu_pembayaran' => (int) ($countsByStatus[Order::MENUNGGU_PEMBAYARAN] ?? 0),
+            'menunggu_verifikasi' => (int) ($countsByStatus[Order::MENUNGGU_VERIFIKASI] ?? 0),
+            'dibayar' => (int) ($countsByStatus[Order::DIBAYAR] ?? 0),
+            'diproses' => (int) ($countsByStatus[Order::DIPROSES] ?? 0),
+            'dikirim' => (int) ($countsByStatus[Order::DIKIRIM] ?? 0),
+            'selesai' => (int) ($countsByStatus[Order::SELESAI] ?? 0),
+            'dibatalkan' => (int) ($countsByStatus[Order::DIBATALKAN] ?? 0),
         ];
 
         return view('admin.orders.index', compact('orders', 'statusCounts'));

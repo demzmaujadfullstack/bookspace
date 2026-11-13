@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Storage;
 
 #[Fillable([
     'category_id', 'title', 'slug', 'author', 'publisher', 'isbn', 'year',
@@ -21,6 +20,15 @@ class Book extends Model
     use HasFactory;
 
     public const STOCK_LOW_THRESHOLD = 5;
+
+    /** @return void */
+    protected static function booted()
+    {
+        // Badge jumlah buku per kategori di menu ikut berubah saat buku
+        // disimpan, dihapus, atau dipindah kategori.
+        static::saved(fn () => Category::flushNavCache());
+        static::deleted(fn () => Category::flushNavCache());
+    }
 
     public function category(): BelongsTo
     {
@@ -66,6 +74,14 @@ class Book extends Model
             ->withCount('reviews');
     }
 
+    /** Jumlah eksemplar dari transaksi yang sudah dikonfirmasi, dimuat dalam satu query. */
+    public function scopeWithSoldCount(Builder $query): Builder
+    {
+        return $query->withCount([
+            'orderItems as sold_count' => fn (Builder $q) => $q->whereHas('order', fn (Builder $o) => $o->whereIn('status', Order::STOCK_REDUCED_STATUSES)),
+        ]);
+    }
+
     /** Harga akhir setelah diskon persen, dibulatkan ke ratusan rupiah. */
     public function finalPrice(): int
     {
@@ -77,13 +93,16 @@ class Book extends Model
         return $this->discount_percent > 0 && $this->finalPrice() < $this->price;
     }
 
+    /**
+     * Sampul dipercaya dari kolom `cover`; bila filenya hilang, atribut
+     * onerror pada <img> yang mengganti dengan placeholder. Ini menghindarkan
+     * satu cek filesystem per buku saat menampilkan daftar.
+     */
     public function coverUrl(): string
     {
-        if ($this->cover && Storage::disk('public')->exists($this->cover)) {
-            return asset('storage/'.$this->cover);
-        }
-
-        return asset('images/cover-placeholder.svg');
+        return $this->cover
+            ? asset('storage/'.$this->cover)
+            : asset('images/cover-placeholder.svg');
     }
 
     public function stockStatus(): string
@@ -109,9 +128,9 @@ class Book extends Model
     /** Eksemplar terjual pada transaksi yang pembayarannya sudah dikonfirmasi. */
     public function soldCount(): int
     {
-        return (int) $this->orderItems()
+        return (int) ($this->sold_count ?? $this->orderItems()
             ->whereHas('order', fn (Builder $q) => $q->whereIn('status', Order::STOCK_REDUCED_STATUSES))
-            ->sum('quantity');
+            ->sum('quantity'));
     }
 
     /**

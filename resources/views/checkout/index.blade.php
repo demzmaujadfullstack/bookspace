@@ -189,7 +189,7 @@
                         @foreach($cart->items as $item)
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-14 bg-[#f4f2ec] rounded overflow-hidden shrink-0 border border-[#e8e6df]">
-                                <img src="{{ $item->book->coverUrl() }}" alt="{{ $item->book->title }}" class="w-full h-full object-cover">
+                                <img src="{{ $item->book->coverUrl() }}" alt="{{ $item->book->title }}" class="w-full h-full object-cover" onerror="this.src='{{ asset('images/cover-placeholder.svg') }}'">
                             </div>
                             <div class="flex-1 min-w-0">
                                 <p class="text-xs font-serif-display font-bold text-gray-800 truncate">{{ $item->book->title }}</p>

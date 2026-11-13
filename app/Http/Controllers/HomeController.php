@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Banner;
 use App\Models\Book;
 use App\Models\Category;
-use App\Models\Order;
 use App\Models\Review;
 use Illuminate\View\View;
 
@@ -15,11 +14,9 @@ class HomeController extends Controller
     {
         $banners = Banner::where('is_active', true)->orderBy('sort_order')->get();
 
-        $categories = Category::withCount('books')->orderBy('books_count', 'desc')->get();
+        $categories = Category::navList()->sortByDesc('books_count')->values();
 
-        $bestSellers = Book::forCards()->withCount([
-            'orderItems as sold_count' => fn ($q) => $q->whereHas('order', fn ($o) => $o->whereIn('status', Order::STOCK_REDUCED_STATUSES)),
-        ])->orderByDesc('sold_count')->limit(8)->get();
+        $bestSellers = Book::forCards()->withSoldCount()->orderByDesc('sold_count')->limit(8)->get();
 
         $newBooks = Book::forCards()->latest()->limit(8)->get();
 

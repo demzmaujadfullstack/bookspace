@@ -46,7 +46,7 @@
                         <div class="py-3.5 flex items-center justify-between text-xs">
                             <div class="flex items-center gap-3">
                                 @if($item->book)
-                                    <img src="{{ $item->book->coverUrl() }}" alt="{{ $item->book_title }}" class="w-10 h-14 object-cover rounded border border-gray-100">
+                                    <img src="{{ $item->book->coverUrl() }}" alt="{{ $item->book_title }}" class="w-10 h-14 object-cover rounded border border-gray-100" onerror="this.src='{{ asset('images/cover-placeholder.svg') }}'">
                                 @endif
                                 <div>
                                     <p class="font-bold text-gray-900">{{ $item->book_title }}</p>
