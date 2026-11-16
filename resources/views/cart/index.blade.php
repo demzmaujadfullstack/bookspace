@@ -45,7 +45,7 @@
         @php
             $items = $cart->items;
             $subtotal = $items->sum(fn($item) => $item->subtotal());
-            $freeShippingThreshold = 200000;
+            $freeShippingThreshold = (int) \App\Models\Setting::value('free_shipping_threshold', 200000) ?: 200000;
             $remainingForFreeShipping = max(0, $freeShippingThreshold - $subtotal);
             $progressPercent = min(100, round(($subtotal / $freeShippingThreshold) * 100));
         @endphp

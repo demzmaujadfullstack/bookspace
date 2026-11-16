@@ -72,6 +72,12 @@
                     @endforelse
                 </tbody>
             </table>
+
+            @if($banners->hasPages())
+                <div class="mt-4">
+                    {{ $banners->links() }}
+                </div>
+            @endif
         </div>
     </div>
 

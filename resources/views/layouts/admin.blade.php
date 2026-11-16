@@ -109,8 +109,13 @@
                 </div>
                 @php
                     $openChats = \App\Models\Conversation::where('status', 'open')->count();
+                    $unreadMessages = \App\Models\Message::unreadForAdmins()->count();
                 @endphp
-                @if($openChats > 0)
+                @if($unreadMessages > 0)
+                    <span class="flex items-center gap-1">
+                        <span class="bg-[#e05c1a] text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{{ $unreadMessages }}</span>
+                    </span>
+                @elseif($openChats > 0)
                     <span class="bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{{ $openChats }}</span>
                 @endif
             </a>

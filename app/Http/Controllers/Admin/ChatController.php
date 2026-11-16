@@ -23,8 +23,10 @@ class ChatController extends Controller
 
         $conversations = $query->paginate(15)->withQueryString();
 
-        $openCount = Conversation::where('status', Conversation::OPEN)->count();
-        $closedCount = Conversation::where('status', Conversation::CLOSED)->count();
+        $counts = Conversation::selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status');
+
+        $openCount = (int) ($counts[Conversation::OPEN] ?? 0);
+        $closedCount = (int) ($counts[Conversation::CLOSED] ?? 0);
 
         return view('admin.chat.index', compact('conversations', 'openCount', 'closedCount'));
     }

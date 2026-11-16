@@ -20,6 +20,7 @@ class SettingSeeder extends Seeder
             ['key' => 'bank_account_number', 'value' => '1234567890'],
             ['key' => 'bank_account_name', 'value' => 'BOOKSPACE Indonesia'],
             ['key' => 'carousel_duration', 'value' => '5000'],
+            ['key' => 'free_shipping_threshold', 'value' => '200000'],
             ['key' => 'footer_description', 'value' => 'BOOKSPACE adalah toko buku online terpercaya yang menyediakan koleksi buku terlengkap dengan harga terjangkau. Kami berkomitmen menghadirkan pengalaman berbelanja buku yang menyenangkan.'],
             ['key' => 'instagram_url', 'value' => 'https://instagram.com/bookspace.id'],
             ['key' => 'twitter_url', 'value' => 'https://twitter.com/bookspace_id'],

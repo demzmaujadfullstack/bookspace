@@ -8,7 +8,7 @@
     {{-- ── Promotional top strip ──────────────────────────── --}}
     <div class="bg-[#0f2255] text-white text-[11px] font-medium tracking-wide py-1.5 hidden md:block">
         <div class="px-5 md:px-8 flex justify-between items-center">
-            <span>📚 &nbsp;<strong>BOOKSPACE</strong> &nbsp;—&nbsp; Gratis ongkir untuk pembelian di atas <strong>Rp200.000</strong></span>
+            <span>📚 &nbsp;<strong>BOOKSPACE</strong> &nbsp;—&nbsp; Gratis ongkir untuk pembelian di atas <strong>Rp{{ number_format((int) \App\Models\Setting::value('free_shipping_threshold', 200000), 0, ',', '.') }}</strong></span>
             <div class="flex items-center gap-5">
                 <a href="{{ route('help.index') }}" class="hover:text-orange-300 transition-colors">Bantuan</a>
                 @auth

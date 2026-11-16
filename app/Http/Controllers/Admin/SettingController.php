@@ -31,6 +31,7 @@ class SettingController extends Controller
             'bank_account_number' => ['required', 'string', 'max:50'],
             'bank_account_name' => ['required', 'string', 'max:120'],
             'carousel_duration' => ['required', 'integer', 'min:1000', 'max:30000'],
+            'free_shipping_threshold' => ['required', 'integer', 'min:0', 'max:10000000'],
             'footer_description' => ['nullable', 'string', 'max:1000'],
             'qris_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:3072'],
         ]);

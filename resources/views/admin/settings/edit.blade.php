@@ -77,6 +77,12 @@
                 </div>
 
                 <div>
+                    <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Ambang Gratis Ongkir (Rp) <span class="text-red-500">*</span></label>
+                    <input type="number" name="free_shipping_threshold" value="{{ old('free_shipping_threshold', $settings['free_shipping_threshold'] ?? 200000) }}" min="0" max="10000000" step="1000" required class="w-full text-xs border border-gray-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-orange-300">
+                    <p class="text-[11px] text-gray-400 mt-1">Belanja di atas nominal ini mendapat gratis ongkir. Angka ini dipakai di keranjang dan banner atas.</p>
+                </div>
+
+                <div>
                     <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Deskripsi Footer Toko</label>
                     <textarea name="footer_description" rows="3" class="w-full text-xs border border-gray-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-orange-300">{{ old('footer_description', $settings['footer_description'] ?? '') }}</textarea>
                 </div>

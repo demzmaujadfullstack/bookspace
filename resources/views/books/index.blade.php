@@ -44,6 +44,7 @@
                     @endphp
                     @foreach([
                         'newest' => 'Terbaru & Terkini',
+                        'bestseller' => 'Terlaris (Paling Banyak Terjual)',
                         'price_asc' => 'Harga: Terendah ke Tertinggi',
                         'price_desc' => 'Harga: Tertinggi ke Terendah',
                         'title_asc' => 'Judul Buku: A - Z',

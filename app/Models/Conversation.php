@@ -35,15 +35,6 @@ class Conversation extends Model
         return $this->hasOne(Message::class)->latestOfMany();
     }
 
-    /** Pesan lawan bicara yang belum dibaca oleh pengguna yang diberikan. */
-    public function unreadCountFor(User $user): int
-    {
-        return $this->messages()
-            ->where('sender_id', '!=', $user->id)
-            ->whereNull('read_at')
-            ->count();
-    }
-
     /**
      * @return array<string, string>
      */

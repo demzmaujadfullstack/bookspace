@@ -114,13 +114,16 @@
                                 <span class="text-[9px] uppercase tracking-wider font-bold {{ $conv->status === 'open' ? 'text-emerald-700' : 'text-gray-400' }}">
                                     ● {{ $conv->status === 'open' ? 'Aktif' : 'Selesai' }}
                                 </span>
-                                @php $unread = $conv->unreadCountFor(auth()->user()); @endphp
-                                @if($unread > 0)
-                                    <span class="bg-[#e05c1a] text-white text-[9px] font-bold px-2 py-0.5 rounded-full">{{ $unread }} baru</span>
+                                @if($conv->unread_count > 0)
+                                    <span class="bg-[#e05c1a] text-white text-[9px] font-bold px-2 py-0.5 rounded-full">{{ $conv->unread_count }} baru</span>
                                 @endif
                             </div>
                         </a>
                         @endforeach
+
+                        @if($conversations->hasPages())
+                            <div class="pt-3">{{ $conversations->links() }}</div>
+                        @endif
                     </div>
                 @endif
             </div>

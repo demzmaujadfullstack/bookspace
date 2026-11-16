@@ -20,9 +20,10 @@ class HelpController extends Controller
         $user = auth()->user();
 
         $conversations = $user->conversations()
-            ->with(['latestMessage', 'messages'])
+            ->with('latestMessage')
+            ->withCount(['messages as unread_count' => fn ($query) => $query->where('sender_id', '!=', $user->id)->whereNull('read_at')])
             ->latest('last_message_at')
-            ->get();
+            ->paginate(8);
 
         $settings = Setting::values();
 
