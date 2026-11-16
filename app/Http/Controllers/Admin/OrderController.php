@@ -142,15 +142,38 @@ class OrderController extends Controller
 
     public function updateStatus(Request $request, Order $order): RedirectResponse
     {
-        $request->validate([
+        $newStatus = $request->input('status');
+
+        $validated = $request->validate([
             'status' => ['required', 'in:pending,menunggu_pembayaran,menunggu_verifikasi,dibayar,diproses,dikirim,selesai,dibatalkan'],
+            'tracking_number' => [
+                $newStatus === Order::DIKIRIM ? 'required' : 'nullable',
+                'string',
+                'max:60',
+            ],
+        ], [
+            'tracking_number.required' => 'Nomor resi wajib diisi saat pesanan ditandai Dikirim.',
+            'tracking_number.max' => 'Nomor resi maksimal 60 karakter.',
         ]);
 
         $oldStatus = $order->status;
-        $newStatus = $request->status;
+
+        $shipment = match (true) {
+            $newStatus === Order::DIKIRIM => [
+                'tracking_number' => $validated['tracking_number'],
+                'shipped_at' => $order->shipped_at ?? now(),
+            ],
+            // Status dikirim ditarik kembali: resi lama tidak relevan lagi.
+            $oldStatus === Order::DIKIRIM => ['tracking_number' => null, 'shipped_at' => null],
+            default => [],
+        };
 
         // If transitioning into stock-reduced status from a non-stock-reduced status, verify payment first
         if (! in_array($oldStatus, Order::STOCK_REDUCED_STATUSES) && in_array($newStatus, Order::STOCK_REDUCED_STATUSES)) {
+            if ($shipment !== []) {
+                $order->update($shipment);
+            }
+
             return $this->verifyPayment($request, $order);
         }
 
@@ -174,13 +197,13 @@ class OrderController extends Controller
                         ]);
                     }
                 }
-                $order->update(['status' => Order::DIBATALKAN]);
+                $order->update([...$shipment, 'status' => Order::DIBATALKAN]);
             });
 
             return back()->with('success', "Pesanan #{$order->code} berhasil dibatalkan dan stok dikembalikan.");
         }
 
-        $order->update(['status' => $newStatus]);
+        $order->update([...$shipment, 'status' => $newStatus]);
 
         return back()->with('success', "Status pesanan #{$order->code} berhasil diubah menjadi '{$order->statusLabel()}'.");
     }

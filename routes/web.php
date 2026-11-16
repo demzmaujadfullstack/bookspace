@@ -68,6 +68,7 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/profil', [UserProfileController::class, 'update'])->name('profile.update');
         Route::get('/pesanan', [OrderController::class, 'index'])->name('orders');
         Route::get('/pesanan/{order}', [OrderController::class, 'show'])->name('orders.show');
+        Route::patch('/pesanan/{order}/terima', [OrderController::class, 'receive'])->name('orders.receive');
     });
 
     // Help / Live Chat

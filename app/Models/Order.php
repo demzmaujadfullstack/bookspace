@@ -11,7 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable([
-    'user_id', 'code', 'status', 'recipient_name', 'phone', 'address', 'total', 'note', 'paid_at',
+    'user_id', 'code', 'status', 'recipient_name', 'phone', 'address', 'total', 'note',
+    'tracking_number', 'paid_at', 'shipped_at',
 ])]
 class Order extends Model
 {
@@ -84,6 +85,12 @@ class Order extends Model
         return in_array($this->status, self::CANCELABLE_STATUSES, true);
     }
 
+    /** Pembeli baru boleh mengonfirmasi penerimaan setelah barang ditandai dikirim. */
+    public function canConfirmReceipt(): bool
+    {
+        return $this->status === self::DIKIRIM;
+    }
+
     /**
      * @return array<string, string>
      */
@@ -92,6 +99,7 @@ class Order extends Model
         return [
             'total' => 'integer',
             'paid_at' => 'datetime',
+            'shipped_at' => 'datetime',
         ];
     }
 }

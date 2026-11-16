@@ -95,6 +95,16 @@
                                 Bayar &amp; Unggah Bukti &rarr;
                             </a>
                         @endif
+                        @if($order->canConfirmReceipt())
+                            <form method="POST" action="{{ route('user.orders.receive', $order) }}"
+                                onsubmit="return confirm('Konfirmasi bahwa pesanan #{{ $order->code }} sudah Anda terima dengan baik?')">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit" class="btn-primary text-xs py-2 px-4 rounded-lg shadow-sm">
+                                    Pesanan Sudah Diterima
+                                </button>
+                            </form>
+                        @endif
                         <a href="{{ route('user.orders.show', $order) }}" class="border border-[#dcd8cd] hover:border-[#0f2255] text-[#0f2255] px-4 py-2 rounded-lg font-semibold transition-colors bg-[#fafaf8]">
                             Lihat Rincian &amp; Faktur
                         </a>

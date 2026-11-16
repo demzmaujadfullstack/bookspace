@@ -132,14 +132,20 @@
                     @if($order->paid_at)
                         <p class="text-[10px] text-gray-400 mt-1">Dikonfirmasi bayar: {{ $order->paid_at->format('d/m/Y H:i') }}</p>
                     @endif
+                    @if($order->tracking_number)
+                        <p class="text-[10px] text-gray-400 mt-1">
+                            Resi: <span class="font-mono font-semibold text-gray-700">{{ $order->tracking_number }}</span>
+                            @if($order->shipped_at) &middot; dikirim {{ $order->shipped_at->format('d/m/Y H:i') }} @endif
+                        </p>
+                    @endif
                 </div>
 
-                <form method="POST" action="{{ route('admin.orders.status', $order) }}" class="space-y-3">
+                <form method="POST" action="{{ route('admin.orders.status', $order) }}" class="space-y-3" x-data="{ status: '{{ $order->status }}' }">
                     @csrf
                     @method('PATCH')
                     <div>
                         <label class="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider mb-1">Ubah Status Pengiriman</label>
-                        <select name="status" class="w-full text-xs border border-gray-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-orange-300">
+                        <select name="status" x-model="status" class="w-full text-xs border border-gray-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-orange-300">
                             <option value="pending" {{ $order->status === 'pending' ? 'selected' : '' }}>Pending</option>
                             <option value="menunggu_pembayaran" {{ $order->status === 'menunggu_pembayaran' ? 'selected' : '' }}>Menunggu Pembayaran</option>
                             <option value="menunggu_verifikasi" {{ $order->status === 'menunggu_verifikasi' ? 'selected' : '' }}>Menunggu Verifikasi</option>
@@ -149,6 +155,23 @@
                             <option value="selesai" {{ $order->status === 'selesai' ? 'selected' : '' }}>Selesai</option>
                             <option value="dibatalkan" {{ $order->status === 'dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
                         </select>
+                    </div>
+
+                    <div x-show="status === 'dikirim'" x-cloak>
+                        <label class="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider mb-1">Nomor Resi Ekspedisi</label>
+                        <input
+                            type="text"
+                            name="tracking_number"
+                            value="{{ old('tracking_number', $order->tracking_number) }}"
+                            maxlength="60"
+                            :required="status === 'dikirim'"
+                            placeholder="mis. JX8812345678 (JNE)"
+                            class="w-full text-xs border border-gray-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-orange-300 font-mono"
+                        >
+                        <p class="text-[10px] text-gray-400 mt-1">Ditampilkan di halaman pesanan pembeli sebagai nomor pelacakan.</p>
+                        @error('tracking_number')
+                            <p class="text-[11px] text-red-600 mt-1 font-semibold">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <button type="submit" class="w-full bg-[#0f2557] hover:bg-orange-500 text-white font-semibold text-xs py-2 rounded-xl transition-colors shadow">

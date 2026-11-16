@@ -59,6 +59,31 @@
                 <p class="font-bold text-sm mb-1">Bukti Pembayaran Sedang Diverifikasi</p>
                 <p>Tim admin BOOKSPACE sedang mencocokkan mutasi pembayaran Anda. Begitu disetujui, stok buku akan otomatis terpotong dan paket segera disiapkan.</p>
             </div>
+        @elseif($order->status === \App\Models\Order::DIKIRIM)
+            <div class="bg-cyan-50 border border-cyan-200 rounded-2xl p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div class="text-xs text-cyan-900">
+                    <p class="font-bold text-sm mb-1">Paket Sedang Dalam Pengiriman</p>
+                    @if($order->tracking_number)
+                        <p>Nomor resi:
+                            <span class="font-mono font-bold">{{ $order->tracking_number }}</span>
+                            @if($order->shipped_at)
+                                &middot; dikirim {{ $order->shipped_at->translatedFormat('d M Y') }}
+                            @endif
+                        </p>
+                        <p class="text-cyan-700 mt-1">Gunakan nomor di atas untuk melacak paket pada situs ekspedisi pilihan Anda.</p>
+                    @else
+                        <p>Paket sudah meninggalkan gudang kami. Nomor resi akan menyusul ditampilkan di halaman ini.</p>
+                    @endif
+                </div>
+                <form method="POST" action="{{ route('user.orders.receive', $order) }}" class="shrink-0"
+                    onsubmit="return confirm('Konfirmasi bahwa semua buku dalam pesanan #{{ $order->code }} sudah Anda terima dengan baik?')">
+                    @csrf
+                    @method('PATCH')
+                    <button type="submit" class="btn-primary text-xs py-2.5 px-5 rounded-lg shadow-sm">
+                        Pesanan Sudah Diterima
+                    </button>
+                </form>
+            </div>
         @endif
 
         {{-- Shipping & Recipient Details --}}
