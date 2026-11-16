@@ -40,6 +40,8 @@ Route::middleware(['auth'])->group(function () {
     // Add to cart & Review & Wishlist
     Route::post('/books/{book}/cart', [BookController::class, 'addToCart'])->name('books.cart.add');
     Route::post('/books/{book}/reviews', [ReviewController::class, 'store'])->name('books.reviews.store');
+    Route::put('/books/{book}/reviews/{review}', [ReviewController::class, 'update'])->name('books.reviews.update');
+    Route::delete('/books/{book}/reviews/{review}', [ReviewController::class, 'destroy'])->name('books.reviews.destroy');
     Route::get('/favorit', [WishlistController::class, 'index'])->name('wishlist.index');
     Route::post('/favorit/{book}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
 

@@ -97,4 +97,111 @@ class WishlistAndReviewTest extends TestCase
         $duplicateResponse->assertSessionHas('error');
         $this->assertCount(1, Review::where('user_id', $user->id)->where('book_id', $book->id)->get());
     }
+
+    public function test_user_can_update_own_review(): void
+    {
+        $user = User::factory()->create();
+        $book = Book::factory()->create(['category_id' => Category::factory()->create()->id]);
+        $review = Review::create([
+            'user_id' => $user->id,
+            'book_id' => $book->id,
+            'rating' => 3,
+            'comment' => 'Awalnya biasa saja, tapi setelah dibaca ulang cukup bagus.',
+        ]);
+
+        $response = $this->actingAs($user)->put(route('books.reviews.update', [$book, $review]), [
+            'rating' => 5,
+            'comment' => 'Setelah dibaca ulang ternyata sangat bagus!',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('reviews', [
+            'id' => $review->id,
+            'rating' => 5,
+            'comment' => 'Setelah dibaca ulang ternyata sangat bagus!',
+        ]);
+    }
+
+    public function test_user_cannot_edit_or_delete_another_users_review(): void
+    {
+        $author = User::factory()->create();
+        $intruder = User::factory()->create();
+        $book = Book::factory()->create(['category_id' => Category::factory()->create()->id]);
+        $review = Review::create([
+            'user_id' => $author->id,
+            'book_id' => $book->id,
+            'rating' => 4,
+            'comment' => 'Ulasan asli milik pembaca lain.',
+        ]);
+
+        $this->actingAs($intruder)
+            ->put(route('books.reviews.update', [$book, $review]), [
+                'rating' => 1,
+                'comment' => 'Ulasan palsu yang ditimpa orang lain.',
+            ])
+            ->assertStatus(403);
+
+        $this->actingAs($intruder)
+            ->delete(route('books.reviews.destroy', [$book, $review]))
+            ->assertStatus(403);
+
+        $this->assertDatabaseHas('reviews', [
+            'id' => $review->id,
+            'rating' => 4,
+            'comment' => 'Ulasan asli milik pembaca lain.',
+        ]);
+    }
+
+    public function test_owner_and_admin_can_delete_a_review(): void
+    {
+        $author = User::factory()->create();
+        $admin = User::factory()->create(['role' => 'admin']);
+        $book = Book::factory()->create(['category_id' => Category::factory()->create()->id]);
+
+        $ownReview = Review::create([
+            'user_id' => $author->id,
+            'book_id' => $book->id,
+            'rating' => 2,
+            'comment' => 'Kertasnya tipis dan tintanya luntur.',
+        ]);
+
+        $this->actingAs($author)
+            ->delete(route('books.reviews.destroy', [$book, $ownReview]))
+            ->assertRedirect();
+        $this->assertDatabaseMissing('reviews', ['id' => $ownReview->id]);
+
+        $otherReview = Review::create([
+            'user_id' => $author->id,
+            'book_id' => $book->id,
+            'rating' => 1,
+            'comment' => 'Ulasan yang perlu dimoderasi oleh admin.',
+        ]);
+
+        $this->actingAs($admin)
+            ->delete(route('books.reviews.destroy', [$book, $otherReview]))
+            ->assertRedirect();
+        $this->assertDatabaseMissing('reviews', ['id' => $otherReview->id]);
+    }
+
+    public function test_book_detail_page_paginates_reviews(): void
+    {
+        $book = Book::factory()->create(['category_id' => Category::factory()->create()->id]);
+
+        foreach (range(1, 7) as $i) {
+            Review::create([
+                'user_id' => User::factory()->create()->id,
+                'book_id' => $book->id,
+                'rating' => 4,
+                'comment' => "Ulasan pembaca nomor {$i} yang cukup panjang untuk diuji.",
+            ]);
+        }
+
+        $firstPage = $this->get(route('books.show', $book->slug));
+        $firstPage->assertStatus(200)->assertSee('Ulasan pembaca nomor');
+        $this->assertCount(5, $firstPage->viewData('reviews'));
+
+        $secondPage = $this->get(route('books.show', $book->slug).'?page=2');
+        $secondPage->assertStatus(200)->assertSee('Ulasan pembaca nomor');
+        $this->assertCount(2, $secondPage->viewData('reviews'));
+    }
 }

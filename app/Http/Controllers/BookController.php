@@ -41,6 +41,7 @@ class BookController extends Controller
 
         $sortOptions = [
             'newest' => fn ($q) => $q->latest(),
+            'bestseller' => fn ($q) => $q->withSoldCount()->orderByDesc('sold_count')->orderBy('title'),
             'price_asc' => fn ($q) => $q->orderBy('price'),
             'price_desc' => fn ($q) => $q->orderByDesc('price'),
             'title_asc' => fn ($q) => $q->orderBy('title'),
@@ -57,7 +58,13 @@ class BookController extends Controller
 
     public function show(string $slug): View
     {
-        $book = Book::with(['category', 'reviews.user'])->where('slug', $slug)->firstOrFail();
+        $book = Book::forCards()->withSoldCount()->where('slug', $slug)->firstOrFail();
+
+        $reviews = $book->reviews()->with('user')->latest()->paginate(5)->withQueryString();
+
+        $userReview = auth()->check()
+            ? $book->reviews()->where('user_id', auth()->id())->first()
+            : null;
 
         $related = Book::forCards()
             ->where('category_id', $book->category_id)
@@ -66,7 +73,7 @@ class BookController extends Controller
             ->limit(4)
             ->get();
 
-        return view('books.show', compact('book', 'related'));
+        return view('books.show', compact('book', 'reviews', 'userReview', 'related'));
     }
 
     public function addToCart(Request $request, Book $book): RedirectResponse
