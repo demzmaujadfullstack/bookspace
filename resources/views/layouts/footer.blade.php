@@ -150,6 +150,11 @@
                 <span class="text-white/20">|</span>
                 <span>Standar Mutu Buku Gramedia &amp; Penerbit Resmi</span>
             </div>
+            <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-white/60">
+                <a href="{{ route('pages.about') }}" class="hover:text-white transition-colors font-medium">Tentang Kami</a>
+                <a href="{{ route('pages.privacy') }}" class="hover:text-white transition-colors font-medium">Kebijakan Privasi</a>
+                <a href="{{ route('pages.terms') }}" class="hover:text-white transition-colors font-medium">Syarat &amp; Ketentuan</a>
+            </div>
         </div>
     </div>
 </footer>

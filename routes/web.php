@@ -14,6 +14,7 @@ use App\Http\Controllers\BookController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\PaymentProofController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\User\HelpController;
@@ -27,6 +28,11 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/books', [BookController::class, 'index'])->name('books.index');
 Route::get('/books/{slug}', [BookController::class, 'show'])->name('books.show');
 Route::get('/api/search', [BookController::class, 'searchSuggest'])->middleware('throttle:30,1')->name('books.search.suggest');
+
+// Static info pages
+Route::get('/tentang', [PageController::class, 'about'])->name('pages.about');
+Route::get('/kebijakan-privasi', [PageController::class, 'privacy'])->name('pages.privacy');
+Route::get('/syarat-ketentuan', [PageController::class, 'terms'])->name('pages.terms');
 
 // Redirect for /dashboard
 Route::get('/dashboard', function () {
