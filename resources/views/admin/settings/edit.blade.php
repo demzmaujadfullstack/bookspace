@@ -10,6 +10,8 @@
             @csrf
             @method('PATCH')
 
+            <x-form-errors class="mb-6" />
+
             {{-- 1. Identitas Toko --}}
             <h2 class="font-display font-bold text-base text-gray-900 mb-4 pb-3 border-b border-gray-100">Identitas Toko</h2>
             <div class="grid md:grid-cols-2 gap-4 mb-6">

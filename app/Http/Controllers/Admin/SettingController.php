@@ -34,6 +34,39 @@ class SettingController extends Controller
             'free_shipping_threshold' => ['required', 'integer', 'min:0', 'max:10000000'],
             'footer_description' => ['nullable', 'string', 'max:1000'],
             'qris_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:3072'],
+        ], [
+            'required' => ':attribute wajib diisi.',
+            'email' => 'Format :attribute tidak sesuai.',
+            'max' => [
+                'string' => ':attribute maksimal :max karakter.',
+                'numeric' => ':attribute melebihi batas nilai :max.',
+                'file' => 'Ukuran :attribute maksimal :max kilobyte.',
+            ],
+            'min' => [
+                'string' => ':attribute minimal :min karakter.',
+                'numeric' => ':attribute belum mencapai nilai minimal :min.',
+            ],
+            'integer' => ':attribute harus berupa angka tanpa koma.',
+            'image' => ':attribute harus berupa gambar.',
+            'mimes' => ':attribute harus berformat JPEG, PNG, JPG, atau WEBP.',
+            'carousel_duration.min' => 'Durasi carousel minimal 1000 milidetik (1 detik).',
+            'carousel_duration.max' => 'Durasi carousel maksimal 30000 milidetik (30 detik).',
+            'free_shipping_threshold.max' => 'Ambang gratis ongkir maksimal Rp10.000.000.',
+            'qris_image.max' => 'Gambar QRIS maksimal 3 MB.',
+        ], [
+            'site_name' => 'nama toko',
+            'site_tagline' => 'tagline',
+            'site_email' => 'email toko',
+            'site_phone' => 'nomor telepon toko',
+            'site_whatsapp' => 'nomor WhatsApp toko',
+            'site_address' => 'alamat toko',
+            'bank_name' => 'nama bank',
+            'bank_account_number' => 'nomor rekening',
+            'bank_account_name' => 'nama pemilik rekening',
+            'carousel_duration' => 'durasi carousel',
+            'free_shipping_threshold' => 'ambang gratis ongkir',
+            'footer_description' => 'deskripsi footer',
+            'qris_image' => 'gambar QRIS',
         ]);
 
         foreach ($validated as $key => $value) {

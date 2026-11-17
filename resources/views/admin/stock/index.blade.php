@@ -4,7 +4,20 @@
 @section('page_title', 'Manajemen & Monitoring Stok')
 
 @section('content')
-<div class="space-y-6" x-data="{ adjustModal: false, activeBook: { id: '', title: '', currentStock: 0 } }">
+@php
+    // Bila validasi penyesuaian stok gagal, modal dibuka lagi untuk buku yang sama agar admin tidak mengulang dari awal.
+    $adjustTarget = old('book_id') && ($errors->has('stock') || $errors->has('reason'))
+        ? \App\Models\Book::find(old('book_id'))
+        : null;
+@endphp
+<div class="space-y-6" x-data="{
+    adjustModal: {{ $adjustTarget ? 'true' : 'false' }},
+    activeBook: {!! \Illuminate\Support\Js::from($adjustTarget
+        ? ['id' => $adjustTarget->id, 'title' => $adjustTarget->title, 'currentStock' => $adjustTarget->stock]
+        : ['id' => '', 'title' => '', 'currentStock' => 0]) !!}
+}">
+
+    <x-form-errors class="mb-4" />
 
     {{-- Stock KPI Summary --}}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -112,6 +125,7 @@
             <form :action="'/admin/stok/' + activeBook.id" method="POST" class="space-y-4">
                 @csrf
                 @method('PATCH')
+                <input type="hidden" name="book_id" :value="activeBook.id">
 
                 <div class="p-3 bg-gray-50 rounded-xl text-xs text-gray-600 flex justify-between">
                     <span>Stok Saat Ini:</span>
@@ -120,12 +134,18 @@
 
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Jumlah Stok Baru <span class="text-red-500">*</span></label>
-                    <input type="number" name="stock" min="0" required class="w-full text-xs border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-orange-300">
+                    <input type="number" name="stock" min="0" value="{{ old('stock') }}" required class="w-full text-xs border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-orange-300">
+                    @error('stock')
+                        <p class="text-[11px] text-red-600 mt-1 font-semibold">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">Alasan Perubahan <span class="text-red-500">*</span></label>
-                    <input type="text" name="reason" placeholder="Contoh: Penerimaan pasokan baru dari penerbit / Koreksi fisik" required class="w-full text-xs border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-orange-300">
+                    <input type="text" name="reason" value="{{ old('reason') }}" placeholder="Contoh: Penerimaan pasokan baru dari penerbit / Koreksi fisik" required class="w-full text-xs border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-orange-300">
+                    @error('reason')
+                        <p class="text-[11px] text-red-600 mt-1 font-semibold">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">

@@ -56,7 +56,10 @@ class StockController extends Controller
             'reason' => ['required', 'string', 'max:255'],
         ], [
             'stock.required' => 'Jumlah stok baru wajib diisi.',
+            'stock.integer' => 'Jumlah stok harus berupa angka bulat, tanpa koma.',
+            'stock.min' => 'Jumlah stok tidak boleh negatif.',
             'reason.required' => 'Alasan perubahan stok wajib dicantumkan.',
+            'reason.max' => 'Alasan perubahan maksimal 255 karakter.',
         ]);
 
         $oldStock = $book->stock;

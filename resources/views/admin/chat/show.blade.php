@@ -7,7 +7,7 @@
 <div class="max-w-5xl mx-auto space-y-4">
     <div class="flex items-center justify-between">
         <a href="{{ route('admin.chat.index') }}" class="text-xs text-gray-400 hover:text-gray-600">← Kembali ke Daftar Obrolan</a>
-        <form method="POST" action="{{ route('admin.chat.close', $conversation) }}">
+        <form method="POST" action="{{ route('admin.chat.close', $conversation) }}"@if($conversation->status === 'open') onsubmit="return confirm('Tutup obrolan ini? Pembeli masih dapat mengirim pesan baru, tetapi riwayat ini tidak lagi muncul sebagai obrolan aktif.')"@endif>
             @csrf
             @method('PATCH')
             <button type="submit" class="text-xs border px-3 py-1.5 rounded-xl font-semibold transition-colors {{ $conversation->status === 'open' ? 'border-gray-300 text-gray-700 hover:bg-gray-100' : 'border-green-300 text-green-700 hover:bg-green-50' }}">
