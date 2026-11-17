@@ -1,123 +1,131 @@
-﻿@extends('layouts.bookspace')
+@extends('layouts.bookspace')
 
-@section('title', 'Riwayat Pesanan Buku Saya')
+@section('title', 'Pesanan Saya')
 
 @section('content')
-<div class="px-5 md:px-8 py-8 md:py-12">
-    <div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-5 border-b border-[#e8e6df]">
+@php
+    $user = auth()->user();
+    $groupCount = fn (array $statuses) => $statusCounts->intersect($statuses)->sum();
+@endphp
+
+<div class="shell py-6 md:py-8">
+
+    <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-            <h1 class="font-serif-display font-bold text-2xl md:text-3xl text-[#0f2255]">Riwayat Pesanan Buku</h1>
-            <p class="text-xs sm:text-sm text-gray-500 mt-1">Daftar seluruh transaksi pembelian dan status pengiriman pesanan Anda.</p>
+            <x-breadcrumb :items="['Beranda' => route('home'), 'Akun Saya' => route('user.dashboard'), 'Pesanan' => null]" class="mb-4" />
+            <h1 class="page-title">Pesanan Saya</h1>
+            <p class="muted mt-1">{{ number_format($orders->total(), 0, ',', '.') }} transaksi tercatat pada akun ini.</p>
         </div>
-        <a href="{{ route('books.index') }}" class="btn-primary text-xs py-2.5 px-4 rounded-lg shadow-sm">
-            + Jelajahi Koleksi Baru
-        </a>
+        <a href="{{ route('books.index') }}" class="btn-ghost btn-sm">Belanja Buku Lagi</a>
     </div>
 
-    @if($orders->isEmpty())
-        <div class="bg-white border border-[#e8e6df] rounded-2xl p-16 text-center shadow-sm my-6">
-            <div class="w-16 h-16 bg-[#f4f2ec] rounded-full flex items-center justify-center mx-auto mb-4 text-[#0f2255]">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                </svg>
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
+        <x-account-nav :user="$user" class="lg:col-span-4 xl:col-span-3" />
+
+        <div class="lg:col-span-8 xl:col-span-9">
+
+            {{-- Chip penyaring status --}}
+            <div class="chip-rail mb-5 flex gap-2 overflow-x-auto pb-1">
+                <a href="{{ route('user.orders') }}"
+                   class="pill shrink-0 border transition-colors {{ $status === null ? 'border-[#0f2255] bg-[#0f2255] text-white' : 'border-[#dcd8cd] bg-white text-[#3f4451] hover:border-[#0f2255] hover:text-[#0f2255]' }}">
+                    Semua <span class="opacity-70">{{ $orders->total() }}</span>
+                </a>
+                @foreach($groups as $key => $group)
+                    @php $count = $groupCount($group['statuses']); @endphp
+                    @if($count > 0)
+                        <a href="{{ route('user.orders', ['status' => $key]) }}"
+                           class="pill shrink-0 border transition-colors {{ $status === $key ? 'border-[#0f2255] bg-[#0f2255] text-white' : 'border-[#dcd8cd] bg-white text-[#3f4451] hover:border-[#0f2255] hover:text-[#0f2255]' }}">
+                            {{ $group['label'] }} <span class="opacity-70">{{ $count }}</span>
+                        </a>
+                    @endif
+                @endforeach
             </div>
-            <h3 class="font-serif-display font-bold text-xl text-gray-900 mb-1">Belum Ada Pesanan Buku</h3>
-            <p class="text-xs sm:text-sm text-gray-500 mb-6 max-w-sm mx-auto">
-                Anda belum pernah melakukan pemesanan buku di BOOKSPACE. Mulailah berbelanja judul favorit Anda sekarang.
-            </p>
-            <a href="{{ route('books.index') }}" class="btn-orange text-xs font-semibold px-6 py-3 rounded-lg shadow-md">
-                Mulai Belanja Buku Sekarang
-            </a>
-        </div>
-    @else
-        <div class="space-y-5">
-            @foreach($orders as $order)
-            <div class="bg-white border border-[#e8e6df] rounded-2xl p-6 shadow-sm hover:border-[#0f2255]/30 transition-all">
-                {{-- Header bar --}}
-                <div class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#f0eee6] text-xs">
-                    <div class="flex items-center gap-3">
-                        <span class="font-mono font-bold text-gray-900 text-sm">#{{ $order->code }}</span>
-                        <span class="text-gray-300">•</span>
-                        <span class="text-gray-500">{{ $order->created_at->translatedFormat('d F Y, H:i') }} WIB</span>
-                    </div>
 
-                    @php
-                        $badgeClasses = match($order->status) {
-                            'pending' => 'bg-gray-100 text-gray-800 border-gray-300',
-                            'menunggu_pembayaran' => 'bg-amber-50 text-amber-900 border-amber-200',
-                            'menunggu_verifikasi' => 'bg-blue-50 text-blue-900 border-blue-200',
-                            'dibayar' => 'bg-indigo-50 text-indigo-900 border-indigo-200',
-                            'diproses' => 'bg-purple-50 text-purple-900 border-purple-200',
-                            'dikirim' => 'bg-cyan-50 text-cyan-900 border-cyan-200',
-                            'selesai' => 'bg-emerald-50 text-emerald-900 border-emerald-200',
-                            'dibatalkan' => 'bg-red-50 text-red-900 border-red-200',
-                            default => 'bg-gray-100 text-gray-800 border-gray-300',
-                        };
-                    @endphp
-                    <span class="px-3 py-1 rounded-full font-semibold text-[11px] border {{ $badgeClasses }}">
-                        {{ $order->statusLabel() }}
-                    </span>
+            @if($orders->isEmpty())
+                <div class="card !p-10 text-center">
+                    <div class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-[#f4f2ec] text-[#0f2255]">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                    </div>
+                    <h2 class="section-title mt-4">{{ $status ? 'Tidak ada pesanan pada penyaring ini' : 'Belum Ada Pesanan' }}</h2>
+                    <p class="muted mx-auto mt-2 max-w-sm">
+                        {{ $status ? 'Coba pilih status lain, atau lihat seluruh riwayat transaksi Anda.' : 'Mulai belanja judul favorit Anda; pesanan akan muncul di sini setelah checkout selesai.' }}
+                    </p>
+                    <div class="mt-5 flex flex-wrap items-center justify-center gap-2.5">
+                        <a href="{{ route('books.index') }}" class="btn-primary">Jelajahi Katalog Buku</a>
+                        @if($status)
+                            <a href="{{ route('user.orders') }}" class="btn-ghost">Lihat Semua Pesanan</a>
+                        @endif
+                    </div>
                 </div>
-
-                {{-- Book Items inside order --}}
-                <div class="py-4 space-y-3">
-                    @foreach($order->items as $item)
-                    <div class="flex items-center justify-between text-xs">
-                        <div class="flex items-center gap-3.5 min-w-0">
-                            @if($item->book)
-                                <div class="w-10 h-14 rounded overflow-hidden shadow-sm bg-white shrink-0 border border-[#e8e6df]">
-                                    <img src="{{ $item->book->coverUrl() }}" alt="{{ $item->book_title }}" class="w-full h-full object-cover" onerror="this.src='{{ asset('images/cover-placeholder.svg') }}'">
+            @else
+                <div class="space-y-4">
+                    @foreach($orders as $order)
+                        <article class="card overflow-hidden">
+                            <header class="flex flex-wrap items-center justify-between gap-3 border-b border-[#e6e3db] bg-[#fafaf8] px-5 py-3.5">
+                                <div class="flex flex-wrap items-center gap-2.5">
+                                    <span class="font-mono text-[13px] font-bold text-[#0f2255]">#{{ $order->code }}</span>
+                                    <x-order-status :order="$order" />
+                                    <span class="text-[12px] text-[#6b6f78]">{{ $order->created_at->translatedFormat('d M Y, H:i') }}</span>
                                 </div>
-                            @endif
-                            <div class="min-w-0">
-                                <p class="font-serif-display font-bold text-gray-900 text-xs sm:text-sm truncate">{{ $item->book_title }}</p>
-                                <p class="text-[11px] text-gray-400 font-mono">{{ $item->quantity }} eksemplar &times; Rp{{ number_format($item->price, 0, ',', '.') }}</p>
+                                <span class="font-serif-display text-[16px] font-bold text-[#17181c]">Rp{{ number_format($order->total, 0, ',', '.') }}</span>
+                            </header>
+
+                            <div class="px-5 py-4">
+                                <x-order-stepper :order="$order" />
+
+                                <ul class="mt-4 space-y-3">
+                                    @foreach($order->items as $item)
+                                        <li class="flex items-center gap-3">
+                                            @if($item->book)
+                                                <a href="{{ route('books.show', $item->book) }}" class="h-14 w-10 shrink-0 overflow-hidden rounded border border-[#e6e3db] bg-white">
+                                                    <img src="{{ $item->book->coverUrl() }}" alt="" class="h-full w-full object-cover" loading="lazy"
+                                                         onerror="this.src='{{ asset('images/cover-placeholder.svg') }}'">
+                                                </a>
+                                            @else
+                                                <span class="grid h-14 w-10 shrink-0 place-items-center rounded border border-[#e6e3db] bg-[#f4f2ec] text-[10px] text-[#9a9484]">tidak<br>ada</span>
+                                            @endif
+                                            <div class="min-w-0 flex-1">
+                                                <p class="truncate text-[13px] font-semibold text-[#17181c]">{{ $item->book_title }}</p>
+                                                <p class="mt-0.5 text-[12px] text-[#6b6f78]">{{ $item->quantity }} &times; Rp{{ number_format($item->price, 0, ',', '.') }}</p>
+                                            </div>
+                                            <span class="shrink-0 text-[13px] font-bold text-[#0f2255]">Rp{{ number_format($item->subtotal, 0, ',', '.') }}</span>
+                                        </li>
+                                    @endforeach
+                                </ul>
                             </div>
-                        </div>
-                        <span class="font-mono font-bold text-gray-900 shrink-0">Rp{{ number_format($item->subtotal, 0, ',', '.') }}</span>
-                    </div>
+
+                            <footer class="flex flex-wrap items-center justify-between gap-3 border-t border-[#e6e3db] px-5 py-3.5">
+                                <p class="text-[12px] text-[#6b6f78]">
+                                    {{ $order->items->sum('quantity') }} eksemplar &middot;
+                                    Bayar dengan {{ $order->latestPayment?->methodLabel() ?? 'metode yang dipilih saat checkout' }}
+                                    @if($order->tracking_number)
+                                        &middot; Resi <span class="font-mono text-[#17181c]">{{ $order->tracking_number }}</span>
+                                    @endif
+                                </p>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    @if($order->status === \App\Models\Order::MENUNGGU_PEMBAYARAN)
+                                        <a href="{{ route('checkout.payment', $order) }}" class="btn-orange btn-sm">Lanjutkan Pembayaran</a>
+                                    @endif
+                                    @if($order->canConfirmReceipt())
+                                        <form method="POST" action="{{ route('user.orders.receive', $order) }}"
+                                              onsubmit="return confirm('Konfirmasi pesanan #{{ $order->code }} sudah Anda terima?')">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" class="btn-primary btn-sm">Pesanan Sudah Diterima</button>
+                                        </form>
+                                    @endif
+                                    <a href="{{ route('user.orders.show', $order) }}" class="btn-ghost btn-sm">Lihat Rincian</a>
+                                </div>
+                            </footer>
+                        </article>
                     @endforeach
                 </div>
 
-                {{-- Bottom strip --}}
-                <div class="pt-4 border-t border-[#f0eee6] flex flex-wrap items-center justify-between gap-3 text-xs">
-                    <div>
-                        <span class="text-gray-500">Total Pembayaran:</span>
-                        <span class="font-serif-display font-bold text-base text-[#e05c1a] ml-1.5 font-mono">
-                            Rp{{ number_format($order->total, 0, ',', '.') }}
-                        </span>
-                        <span class="text-[11px] text-gray-400 ml-2">({{ $order->latestPayment?->methodLabel() ?? 'Manual' }})</span>
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                        @if($order->status === \App\Models\Order::MENUNGGU_PEMBAYARAN)
-                            <a href="{{ route('checkout.payment', $order) }}" class="btn-orange text-xs py-2 px-4 rounded-lg shadow-sm">
-                                Bayar &amp; Unggah Bukti &rarr;
-                            </a>
-                        @endif
-                        @if($order->canConfirmReceipt())
-                            <form method="POST" action="{{ route('user.orders.receive', $order) }}"
-                                onsubmit="return confirm('Konfirmasi bahwa pesanan #{{ $order->code }} sudah Anda terima dengan baik?')">
-                                @csrf
-                                @method('PATCH')
-                                <button type="submit" class="btn-primary text-xs py-2 px-4 rounded-lg shadow-sm">
-                                    Pesanan Sudah Diterima
-                                </button>
-                            </form>
-                        @endif
-                        <a href="{{ route('user.orders.show', $order) }}" class="border border-[#dcd8cd] hover:border-[#0f2255] text-[#0f2255] px-4 py-2 rounded-lg font-semibold transition-colors bg-[#fafaf8]">
-                            Lihat Rincian &amp; Faktur
-                        </a>
-                    </div>
-                </div>
-            </div>
-            @endforeach
-
-            <div class="mt-8 flex justify-center">
-                {{ $orders->links() }}
-            </div>
+                @if($orders->hasPages())
+                    <div class="mt-6 border-t border-[#e6e3db] pt-5">{{ $orders->links() }}</div>
+                @endif
+            @endif
         </div>
-    @endif
+    </div>
 </div>
 @endsection
-

@@ -162,7 +162,8 @@ class UserAddressTest extends TestCase
             ->assertOk()
             ->assertSee('Rina Kartika')
             ->assertSee('Jl. Kenanga No. 12')
-            ->assertSee('Pakai Alamat Tersimpan');
+            ->assertSee('Pakai alamat tersimpan')
+            ->assertSee('(utama)');
     }
 
     public function test_checkout_can_save_the_shipping_address_into_the_book(): void

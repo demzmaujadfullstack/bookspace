@@ -16,13 +16,13 @@ class HomeController extends Controller
 
         $categories = Category::navList()->sortByDesc('books_count')->values();
 
-        $bestSellers = Book::forCards()->withSoldCount()->orderByDesc('sold_count')->limit(8)->get();
+        $bestSellers = Book::forCards()->withSoldCount()->orderByDesc('sold_count')->limit(12)->get();
 
-        $newBooks = Book::forCards()->latest()->limit(8)->get();
+        $newBooks = Book::forCards()->latest()->limit(12)->get();
 
-        $featured = Book::forCards()->where('is_featured', true)->inStock()->limit(8)->get();
+        $featured = Book::forCards()->where('is_featured', true)->inStock()->limit(4)->get();
 
-        $promoBooks = Book::forCards()->where('discount_percent', '>', 0)->orderByDesc('discount_percent')->limit(8)->get();
+        $promoBooks = Book::forCards()->where('discount_percent', '>', 0)->orderByDesc('discount_percent')->limit(12)->get();
 
         $reviews = Review::with('user', 'book')->latest()->limit(6)->get();
 

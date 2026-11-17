@@ -73,6 +73,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [UserProfileController::class, 'dashboard'])->name('dashboard');
         Route::get('/profil', [UserProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('/profil', [UserProfileController::class, 'update'])->name('profile.update');
+        Route::patch('/sandi', [UserProfileController::class, 'updatePassword'])->name('profile.password');
         Route::get('/pesanan', [OrderController::class, 'index'])->name('orders');
         Route::get('/pesanan/{order}', [OrderController::class, 'show'])->name('orders.show');
         Route::patch('/pesanan/{order}/terima', [OrderController::class, 'receive'])->name('orders.receive');

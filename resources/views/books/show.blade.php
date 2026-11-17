@@ -1,453 +1,460 @@
-﻿@extends('layouts.bookspace')
+@extends('layouts.bookspace')
 
 @section('title', $book->title . ' — ' . $book->author)
 @section('meta_description', Str::limit($book->description, 160))
 
+@php
+    $rating = $book->averageRating();
+    $reviewCount = (int) $book->reviews_count;
+    $soldCount = $book->soldCount();
+    $finalPrice = $book->finalPrice();
+    $isWishlisted = auth()->check() && auth()->user()->hasWishlisted($book->id);
+    $isLowStock = $book->stock > 0 && $book->stock <= \App\Models\Book::STOCK_LOW_THRESHOLD;
+    $freeShip = (int) \App\Models\Setting::value('free_shipping_threshold', 75000);
+@endphp
+
 @section('content')
-<div class="px-5 md:px-8 py-8 md:py-12" x-data="{ previewOpen: false }">
+<div class="shell py-5 pb-28 md:py-7 lg:pb-14" x-data="{ qty: 1, max: {{ max($book->stock, 1) }}, previewOpen: false, tab: 'sinopsis' }">
 
-    {{-- ── Breadcrumb ────────────────────────────────────────── --}}
-    <nav class="flex items-center gap-2 text-xs text-gray-500 mb-8 pb-4 border-b border-[#e8e6df]">
-        <a href="{{ route('home') }}" class="hover:text-[#0f2255] transition-colors">Beranda</a>
-        <span>/</span>
-        <a href="{{ route('books.index') }}" class="hover:text-[#0f2255] transition-colors">Katalog Buku</a>
-        @if($book->category)
-            <span>/</span>
-            <a href="{{ route('books.index', ['category' => $book->category->slug]) }}" class="hover:text-[#0f2255] transition-colors">{{ $book->category->name }}</a>
-        @endif
-        <span>/</span>
-        <span class="text-gray-800 font-medium truncate max-w-xs">{{ $book->title }}</span>
-    </nav>
+    <x-breadcrumb class="mb-6" :items="[
+        'Beranda' => route('home'),
+        'Katalog' => route('books.index'),
+        $book->category->name ?? 'Kategori' => $book->category ? route('books.index', ['category' => $book->category->slug]) : null,
+        Str::limit($book->title, 42) => null,
+    ]" />
 
-    {{-- ── Product Detail Hero ────────────────────────────────── --}}
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 mb-16">
+    {{-- ── Ringkasan produk ───────────────────────────────────── --}}
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
 
-        {{-- Left: Book Visual Presentation (4 cols) --}}
-        <div class="lg:col-span-5 flex flex-col items-center">
-            <div class="sticky top-28 w-full max-w-sm">
-                {{-- Physical Book Display Card --}}
-                <div class="relative bg-[#f4f2ec] p-8 rounded-2xl border border-[#e8e6df] shadow-sm flex items-center justify-center">
-                    <div class="relative w-full max-w-[240px] aspect-[2/3] rounded shadow-2xl overflow-hidden bg-white">
-                        <img
-                            src="{{ $book->coverUrl() }}"
-                            alt="{{ $book->title }}"
-                            class="w-full h-full object-cover"
-                            onerror="this.src='{{ asset('images/cover-placeholder.svg') }}'"
-                        >
-                        {{-- Book spine shadow effect --}}
-                        <div class="absolute inset-y-0 left-0 w-4 bg-gradient-to-r from-black/35 via-black/15 to-transparent pointer-events-none"></div>
-                        <div class="absolute inset-y-0 right-0 w-[2px] bg-white/40 pointer-events-none"></div>
+        {{-- Sampul --}}
+        <div class="lg:col-span-5 xl:col-span-4">
+            <div class="space-y-4 lg:sticky lg:top-[108px]">
+                <div class="relative rounded-xl border border-[#e6e3db] bg-[#f4f2ec] p-5 sm:p-8">
+                    <div class="relative mx-auto aspect-[2/3] w-full max-w-[190px] overflow-hidden rounded-md bg-white shadow-[0_20px_44px_-20px_rgba(11,23,54,.55)] sm:max-w-[230px] lg:max-w-[260px]">
+                        <img src="{{ $book->coverUrl() }}" alt="Sampul buku {{ $book->title }}" class="h-full w-full object-cover"
+                             onerror="this.src='{{ asset('images/cover-placeholder.svg') }}'">
+                        <div class="pointer-events-none absolute inset-y-0 left-0 w-4 bg-gradient-to-r from-black/35 via-black/15 to-transparent"></div>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 w-px bg-white/40"></div>
                     </div>
 
-                    {{-- Badges --}}
                     @if($book->hasDiscount())
-                        <div class="absolute top-4 right-4 bg-[#e05c1a] text-white text-xs font-bold px-3 py-1 rounded shadow-md tracking-wide">
-                            HEMAT {{ $book->discount_percent }}%
-                        </div>
+                        <span class="pill absolute left-4 top-4 bg-[#e05c1a] font-bold text-white">-{{ $book->discount_percent }}%</span>
                     @endif
                 </div>
 
-                {{-- Trust Notes Under Cover --}}
-                <div class="mt-4 bg-white border border-[#e8e6df] rounded-xl p-4 space-y-2 text-xs text-gray-600">
-                    <div class="flex items-center gap-2.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#0f2255] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                        </svg>
-                        <span>Jaminan 100% Produk Original langsung dari Penerbit</span>
+                <div class="card space-y-2.5 !p-4 text-[12px] text-[#3f4451]">
+                    <div class="flex items-start gap-2.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-[#0f2255]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.031 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        <span>100% buku asli, dipasok langsung dari penerbit dan distributor resmi.</span>
                     </div>
-                    <div class="flex items-center gap-2.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#0f2255] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                        </svg>
-                        <span>Pengemasan berlapis karton tebal &amp; bubble wrap</span>
+                    <div class="flex items-start gap-2.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-[#0f2255]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                        <span>Dikemas karton tebal dan bubble wrap sebelum diserahkan ke kurir.</span>
+                    </div>
+                    <div class="flex items-start gap-2.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-[#0f2255]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                        <span>Bebas ongkir untuk total belanja di atas Rp{{ number_format($freeShip, 0, ',', '.') }}.</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        {{-- Right: Editorial Book Details (7 cols) --}}
-        <div class="lg:col-span-7">
-            {{-- Category Pill --}}
-            @if($book->category)
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded bg-[#f4f2ec] text-[#e05c1a] text-xs font-semibold uppercase tracking-wider mb-3">
-                    <span>{{ $book->category->name }}</span>
-                    @if($book->year)
-                        <span class="text-gray-400">•</span>
-                        <span class="text-gray-600 font-normal">{{ $book->year }}</span>
-                    @endif
-                </div>
-            @endif
+        {{-- Informasi dan pembelian --}}
+        <div class="lg:col-span-7 xl:col-span-8">
+            <div class="flex flex-wrap items-center gap-2 text-[12px]">
+                @if($book->category)
+                    <a href="{{ route('books.index', ['category' => $book->category->slug]) }}"
+                       class="pill bg-[#f4f2ec] font-semibold text-[#0f2255] transition-colors hover:bg-[#e8e6df]">{{ $book->category->name }}</a>
+                @endif
+                @if($book->year)
+                    <span class="pill bg-[#f4f2ec] text-[#6b6f78]">Terbit {{ $book->year }}</span>
+                @endif
+                @if($soldCount > 0)
+                    <span class="pill bg-[#f4f2ec] text-[#6b6f78]">{{ number_format($soldCount, 0, ',', '.') }} terjual</span>
+                @endif
+            </div>
 
-            {{-- Title --}}
-            <h1 class="font-serif-display font-bold text-2xl sm:text-3xl lg:text-4xl text-[#0f2255] mb-2 leading-tight">
-                {{ $book->title }}
-            </h1>
+            <h1 class="mt-3 font-serif-display text-[26px] font-bold leading-tight text-[#0f2255] sm:text-[32px]">{{ $book->title }}</h1>
 
-            {{-- Author Attribution --}}
-            <p class="text-base text-gray-600 font-serif-display italic mb-4">
-                Oleh <span class="font-bold text-gray-900 not-italic">{{ $book->author }}</span>
+            <p class="mt-1.5 text-sm text-[#6b6f78]">
+                oleh <span class="font-semibold text-[#17181c]">{{ $book->author }}</span>
                 @if($book->publisher)
-                    &bull; Diterbitkan oleh <span class="text-gray-800 font-medium not-italic">{{ $book->publisher }}</span>
+                    &middot; {{ $book->publisher }}
                 @endif
             </p>
 
-            {{-- Rating & Social Proof --}}
-            @php $rating = $book->averageRating(); $reviewCount = $book->reviews_count; @endphp
-            <div class="flex items-center gap-3 pb-6 mb-6 border-b border-[#e8e6df] text-xs">
+            <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13px]">
                 @if($rating > 0)
-                    <div class="flex items-center text-amber-500">
+                    <div class="flex items-center gap-1 text-[#e0a80c]">
                         @for($i = 1; $i <= 5; $i++)
-                            <svg class="h-4 w-4 {{ $i <= round($rating) ? 'fill-current' : 'text-gray-200 fill-transparent stroke-current' }}" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
-                            </svg>
+                            <svg class="h-4 w-4 {{ $i <= round($rating) ? 'fill-current stroke-current' : 'fill-transparent text-[#d8d4c8] stroke-current' }}" viewBox="0 0 24 24" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
                         @endfor
                     </div>
-                    <span class="font-bold text-gray-800 text-sm">{{ number_format($rating, 1) }}</span>
-                    <span class="text-gray-400">({{ $reviewCount }} Ulasan Pembaca)</span>
+                    <span class="font-bold text-[#17181c]">{{ number_format($rating, 1) }}</span>
+                    <button type="button" @click="tab = 'ulasan'; document.getElementById('book-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' })"
+                            class="text-[#6b6f78] underline decoration-[#d8d4c8] underline-offset-2 transition-colors hover:text-[#0f2255]">{{ $reviewCount }} ulasan</button>
                 @else
-                    <span class="text-gray-400 font-sans">Belum ada ulasan pembaca</span>
+                    <span class="text-[#9a9484]">Belum ada ulasan</span>
                 @endif
-                <span class="text-gray-300">•</span>
-                <span class="text-gray-600 font-medium">{{ $book->soldCount() }} eksemplar terjual</span>
             </div>
 
-            {{-- Price Display Box --}}
-            <div class="bg-[#fafaf8] border border-[#e8e6df] rounded-xl p-5 mb-6">
-                <div class="flex items-baseline gap-3 mb-2">
-                    @if($book->hasDiscount())
-                        <span class="font-serif-display font-bold text-3xl text-[#e05c1a]">
-                            Rp{{ number_format($book->finalPrice(), 0, ',', '.') }}
+            {{-- Harga dan aksi pembelian --}}
+            <div class="mt-6 card overflow-hidden">
+                <div class="border-b border-[#e6e3db] bg-[#fafaf8] px-5 py-4">
+                    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <span class="font-serif-display text-[28px] font-bold {{ $book->hasDiscount() ? 'text-[#e05c1a]' : 'text-[#0f2255]' }}">
+                            Rp{{ number_format($finalPrice, 0, ',', '.') }}
                         </span>
-                        <span class="text-base text-gray-400 line-through">
-                            Rp{{ number_format($book->price, 0, ',', '.') }}
-                        </span>
-                        <span class="bg-[#e05c1a] text-white text-xs font-bold px-2 py-0.5 rounded">
-                            Diskon {{ $book->discount_percent }}%
-                        </span>
+                        @if($book->hasDiscount())
+                            <span class="text-[15px] text-[#a8a498] line-through">Rp{{ number_format($book->price, 0, ',', '.') }}</span>
+                            <span class="pill bg-[#fdece2] font-bold text-[#c54e12]">Hemat {{ $book->discount_percent }}%</span>
+                        @endif
+                    </div>
+
+                    <div class="mt-2 flex items-center gap-2 text-[12px] font-semibold">
+                        @if($book->stock === 0)
+                            <span class="h-2 w-2 rounded-full bg-[#b42318]"></span>
+                            <span class="text-[#b42318]">Stok habis — buku sedang tidak bisa dipesan</span>
+                        @elseif($isLowStock)
+                            <span class="h-2 w-2 animate-pulse rounded-full bg-[#e05c1a]"></span>
+                            <span class="text-[#c54e12]">Sisa {{ $book->stock }} eksemplar, cepat habis</span>
+                        @else
+                            <span class="h-2 w-2 rounded-full bg-emerald-600"></span>
+                            <span class="text-emerald-700">Stok tersedia ({{ $book->stock }} eksemplar siap kirim)</span>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="p-5">
+                    @if($book->stock > 0)
+                        @auth
+                            <form method="POST" action="{{ route('books.cart.add', $book) }}" id="buy-form" class="space-y-4">
+                                @csrf
+                                <div class="flex items-center gap-3">
+                                    <span class="text-[12px] font-semibold uppercase tracking-wide text-[#3f4451]">Jumlah</span>
+                                    <div class="flex h-11 items-center overflow-hidden rounded-lg border border-[#dcd8cd] bg-white">
+                                        <button type="button" @click="if (qty > 1) qty--" :disabled="qty <= 1"
+                                                class="grid h-full w-10 place-items-center text-lg text-[#3f4451] transition-colors hover:bg-[#f4f2ec] disabled:opacity-35" aria-label="Kurangi jumlah">&minus;</button>
+                                        <input type="text" inputmode="numeric" name="quantity" x-model="qty"
+                                               @change="qty = Math.max(1, Math.min(max, parseInt(qty) || 1))"
+                                               aria-label="Jumlah eksemplar"
+                                               class="h-full w-14 border-x border-[#dcd8cd] text-center text-sm font-bold text-[#0f2255] focus:outline-none" style="box-shadow:none">
+                                        <button type="button" @click="if (qty < max) qty++" :disabled="qty >= max"
+                                                class="grid h-full w-10 place-items-center text-lg text-[#3f4451] transition-colors hover:bg-[#f4f2ec] disabled:opacity-35" aria-label="Tambah jumlah">+</button>
+                                    </div>
+                                    <span class="text-[12px] text-[#9a9484]">maks {{ $book->stock }}</span>
+                                </div>
+
+                                <div class="flex flex-col gap-2.5 sm:flex-row">
+                                    <button type="submit" class="btn-primary flex-1 !py-3">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                                        <span>Tambah ke Keranjang</span>
+                                    </button>
+                                    <a href="{{ route('cart.index') }}" class="btn-ghost sm:w-44">Lihat Keranjang</a>
+                                </div>
+                            </form>
+                        @else
+                            <a href="{{ route('login') }}" class="btn-primary w-full !py-3">Masuk untuk Memesan</a>
+                            <p class="mt-2.5 text-[12px] text-[#6b6f78]">Anda perlu masuk untuk menyimpan buku ke keranjang atau daftar favorit.</p>
+                        @endauth
+
+                        <div class="mt-4 flex flex-wrap items-center gap-2.5 border-t border-[#f0eee6] pt-4">
+                            @auth
+                                <form method="POST" action="{{ route('wishlist.toggle', $book) }}">
+                                    @csrf
+                                    <button type="submit"
+                                            class="pill border transition-colors {{ $isWishlisted ? 'border-[#f3c9c2] bg-[#fdf1ef] text-[#b42318]' : 'border-[#dcd8cd] bg-white text-[#3f4451] hover:border-[#b42318] hover:text-[#b42318]' }}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="{{ $isWishlisted ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                                        <span>{{ $isWishlisted ? 'Tersimpan di Favorit' : 'Simpan ke Favorit' }}</span>
+                                    </button>
+                                </form>
+                            @endauth
+                            <button type="button" @click="previewOpen = true" class="pill border border-[#dcd8cd] bg-white text-[#3f4451] transition-colors hover:border-[#0f2255] hover:text-[#0f2255]">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#e05c1a]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                                <span>Baca Cuplikan</span>
+                            </button>
+                        </div>
                     @else
-                        <span class="font-serif-display font-bold text-3xl text-[#0f2255]">
-                            Rp{{ number_format($book->price, 0, ',', '.') }}
-                        </span>
+                        <div class="rounded-lg border border-dashed border-[#dcd8cd] bg-[#fafaf8] p-4 text-center">
+                            <p class="text-sm font-semibold text-[#3f4451]">Stok buku ini sedang habis.</p>
+                            <p class="muted mt-1">Simpan ke favorit agar mudah menemukannya lagi saat stok bertambah.</p>
+                            @auth
+                                <form method="POST" action="{{ route('wishlist.toggle', $book) }}" class="mt-3">
+                                    @csrf
+                                    <button type="submit" class="btn-ghost btn-sm">{{ $isWishlisted ? 'Buka dari Favorit' : 'Simpan ke Favorit' }}</button>
+                                </form>
+                            @else
+                                <a href="{{ route('login') }}" class="btn-ghost btn-sm mt-3">Masuk untuk menyimpan</a>
+                            @endauth
+                        </div>
                     @endif
                 </div>
-
-                {{-- Stock Status Indicator --}}
-                <div class="flex items-center gap-2 text-xs">
-                    @if($book->stock === 0)
-                        <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
-                        <span class="text-red-600 font-bold">Stok Habis (Sementara Tidak Tersedia)</span>
-                    @elseif($book->stock <= \App\Models\Book::STOCK_LOW_THRESHOLD)
-                        <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
-                        <span class="text-amber-700 font-semibold">Stok Terbatas: Sisa {{ $book->stock }} eksemplar</span>
-                    @else
-                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                        <span class="text-emerald-700 font-semibold">Stok Tersedia ({{ $book->stock }} eksemplar siap kirim)</span>
-                    @endif
-                </div>
             </div>
 
-            {{-- Purchase Box / Add to Cart --}}
-            <div class="mb-8 space-y-3">
-                @if($book->stock > 0)
-                    @auth
-                        <form method="POST" action="{{ route('books.cart.add', $book) }}" class="flex flex-col sm:flex-row items-stretch gap-3" x-data="{ qty: 1, max: {{ $book->stock }} }">
-                            @csrf
-                            {{-- Quantity Selector — Alpine.js stepper (avoids @tailwindcss/forms padding bug on type=number) --}}
-                            <div class="flex items-center border-2 border-[#dcd8cd] rounded-xl overflow-hidden bg-white w-full sm:w-40 shrink-0">
-                                <button type="button" @click="if (qty > 1) qty--" class="w-11 h-12 flex items-center justify-center text-gray-600 hover:bg-[#f4f2ec] transition-colors font-bold text-xl select-none" :disabled="qty <= 1">−</button>
-                                <input type="text" inputmode="numeric" id="qty" name="quantity" x-model="qty" @change="qty = Math.max(1, Math.min(max, parseInt(qty) || 1))" class="flex-1 h-12 text-center font-bold text-base text-[#0f2255] focus:outline-none focus:ring-0 p-0 border-x border-[#dcd8cd]" style="box-shadow:none">
-                                <button type="button" @click="if (qty < max) qty++" class="w-11 h-12 flex items-center justify-center text-gray-600 hover:bg-[#f4f2ec] transition-colors font-bold text-xl select-none" :disabled="qty >= max">+</button>
-                            </div>
-
-                            {{-- CTA Button --}}
-                            <button type="submit" class="flex-1 bg-[#0f2255] hover:bg-[#1a3380] text-white font-semibold py-3.5 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-2.5 shadow-md">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                                </svg>
-                                <span>Tambahkan ke Keranjang</span>
-                            </button>
-                        </form>
-                    @else
-                        <a href="{{ route('login') }}" class="flex items-center justify-center gap-2.5 w-full bg-[#0f2255] hover:bg-[#1a3380] text-white font-semibold py-3.5 px-6 rounded-xl transition-all duration-200 shadow-md">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
-                            </svg>
-                            <span>Masuk untuk Melakukan Pemesanan</span>
-                        </a>
-                    @endauth
-                @else
-                    <button disabled class="w-full bg-gray-200 text-gray-500 font-semibold py-3.5 px-6 rounded-xl cursor-not-allowed text-sm">
-                        Stok Buku Sedang Habis
-                    </button>
-                @endif
-
-                {{-- Action Row: Wishlist & Baca Cuplikan --}}
-                <div class="flex items-center gap-2.5 pt-1">
-                    {{-- Baca Cuplikan Button --}}
-                    <button
-                        type="button"
-                        @click="previewOpen = true"
-                        class="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#f4f2ec] hover:bg-[#ebe7de] text-[#0f2255] border border-[#dcd8cd] rounded-xl text-xs font-bold transition-all shadow-sm"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-[#e05c1a]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                        </svg>
-                        <span>Baca Cuplikan Bab Pertama</span>
-                    </button>
-
-                    {{-- Wishlist Toggle Button --}}
-                    @auth
-                        @php
-                            $isWishlisted = auth()->user()->hasWishlisted($book->id);
-                        @endphp
-                        <form method="POST" action="{{ route('wishlist.toggle', $book) }}">
-                            @csrf
-                            <button
-                                type="submit"
-                                class="flex items-center justify-center gap-1.5 px-4 py-3 border rounded-xl text-xs font-bold transition-all shadow-sm {{ $isWishlisted ? 'bg-red-50 border-red-200 text-red-600' : 'bg-white border-[#dcd8cd] text-gray-700 hover:border-red-300 hover:text-red-500 hover:bg-red-50/50' }}"
-                                title="{{ $isWishlisted ? 'Hapus dari Favorit' : 'Simpan ke Favorit' }}"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="{{ $isWishlisted ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-                                </svg>
-                                <span>{{ $isWishlisted ? 'Tersimpan' : 'Favorit' }}</span>
-                            </button>
-                        </form>
-                    @endauth
+            {{-- Identitas buku --}}
+            <dl class="mt-6 grid grid-cols-2 gap-x-6 gap-y-3.5 border-t border-[#e6e3db] pt-5 text-[13px] sm:grid-cols-3">
+                <div>
+                    <dt class="eyebrow">ISBN</dt>
+                    <dd class="mt-1 font-mono text-[#17181c]">{{ $book->isbn ?: '—' }}</dd>
                 </div>
-            </div>
-
-            {{-- ── Book Specifications Table ──────────────────── --}}
-            <div class="border-t border-[#e8e6df] pt-6">
-                <h3 class="font-serif-display font-bold text-base text-[#0f2255] mb-4">Informasi Bibliografi &amp; Spesifikasi</h3>
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-y-4 gap-x-6 text-xs bg-white p-5 rounded-xl border border-[#e8e6df]">
-                    <div>
-                        <span class="block text-gray-400 uppercase tracking-wider mb-0.5">ISBN</span>
-                        <span class="font-mono font-medium text-gray-800">{{ $book->isbn }}</span>
-                    </div>
-                    <div>
-                        <span class="block text-gray-400 uppercase tracking-wider mb-0.5">Penerbit</span>
-                        <span class="font-medium text-gray-800">{{ $book->publisher }}</span>
-                    </div>
-                    <div>
-                        <span class="block text-gray-400 uppercase tracking-wider mb-0.5">Tahun Terbit</span>
-                        <span class="font-medium text-gray-800">{{ $book->year }}</span>
-                    </div>
-                    <div>
-                        <span class="block text-gray-400 uppercase tracking-wider mb-0.5">Kategori</span>
-                        <span class="font-medium text-[#e05c1a]">{{ $book->category->name ?? '-' }}</span>
-                    </div>
-                    <div>
-                        <span class="block text-gray-400 uppercase tracking-wider mb-0.5">Format Buku</span>
-                        <span class="font-medium text-gray-800">Buku Fisik (Cetakan Resmi)</span>
-                    </div>
-                    <div>
-                        <span class="block text-gray-400 uppercase tracking-wider mb-0.5">Bahasa</span>
-                        <span class="font-medium text-gray-800">Bahasa Indonesia</span>
-                    </div>
+                <div>
+                    <dt class="eyebrow">Penerbit</dt>
+                    <dd class="mt-1 text-[#17181c]">{{ $book->publisher ?: '—' }}</dd>
                 </div>
-            </div>
-
+                <div>
+                    <dt class="eyebrow">Tahun Terbit</dt>
+                    <dd class="mt-1 text-[#17181c]">{{ $book->year ?: '—' }}</dd>
+                </div>
+                <div>
+                    <dt class="eyebrow">Kategori</dt>
+                    <dd class="mt-1 text-[#17181c]">{{ $book->category->name ?? '—' }}</dd>
+                </div>
+                <div>
+                    <dt class="eyebrow">Pengarang</dt>
+                    <dd class="mt-1 text-[#17181c]">{{ $book->author }}</dd>
+                </div>
+                <div>
+                    <dt class="eyebrow">Status Stok</dt>
+                    <dd class="mt-1 text-[#17181c]">{{ $book->stockStatus() }} ({{ $book->stock }})</dd>
+                </div>
+            </dl>
         </div>
     </div>
 
-    {{-- ── Book Synopsis / Editorial Review ───────────────────── --}}
-    <div class="bg-white border border-[#e8e6df] rounded-2xl p-6 sm:p-10 mb-14 shadow-sm">
-        <div class="max-w-3xl">
-            <span class="text-xs font-bold uppercase tracking-widest text-[#e05c1a]">Sinopsis &amp; Ikhtisar</span>
-            <h2 class="font-serif-display font-bold text-2xl text-[#0f2255] mt-1 mb-6">Tentang Buku Ini</h2>
+    {{-- ── Tabs: sinopsis / detail / ulasan ───────────────────── --}}
+    @php
+        $tabs = [
+            'sinopsis' => 'Sinopsis',
+            'detail' => 'Detail Buku',
+            'ulasan' => 'Ulasan ('.$reviewCount.')',
+        ];
+    @endphp
+    <div id="book-tabs" class="mt-12 card overflow-hidden">
+        <div role="tablist" aria-label="Informasi buku" class="chip-rail flex gap-1 overflow-x-auto border-b border-[#e6e3db] bg-white px-2 sm:px-3">
+            @foreach($tabs as $key => $label)
+                <button type="button" role="tab" @click="tab = '{{ $key }}'"
+                        class="shrink-0 border-b-2 px-3.5 py-3 text-[13px] font-semibold transition-colors"
+                        :class="tab === '{{ $key }}' ? 'border-[#e05c1a] text-[#0f2255]' : 'border-transparent text-[#6b6f78] hover:text-[#0f2255]'">
+                    {{ $label }}
+                </button>
+            @endforeach
+        </div>
 
-            <div class="prose prose-slate max-w-none text-gray-700 leading-relaxed font-serif text-base space-y-4">
+        {{-- Sinopsis --}}
+        <div x-show="tab === 'sinopsis'" x-cloak class="p-5 sm:p-8">
+            <div class="max-w-3xl font-serif-display text-[15px] leading-[1.85] text-[#2c3038] sm:text-base">
                 {!! nl2br(e($book->description)) !!}
             </div>
-        </div>
-    </div>
 
-    {{-- ── Reader Reviews ─────────────────────────────────────── --}}
-    <div class="bg-white border border-[#e8e6df] rounded-2xl p-6 sm:p-10 mb-14 shadow-sm">
-        <div class="flex items-center justify-between mb-8 pb-4 border-b border-[#e8e6df]">
-            <div>
-                <span class="text-xs font-bold uppercase tracking-widest text-[#e05c1a]">Tinjauan Pembaca</span>
-                <h2 class="font-serif-display font-bold text-2xl text-[#0f2255] mt-1">Ulasan &amp; Kesan Pembaca</h2>
-            </div>
-            <div class="text-right">
-                <span class="text-2xl font-bold font-serif-display text-[#0f2255]">{{ number_format($rating, 1) }}</span>
-                <span class="text-xs text-gray-400">/ 5.0</span>
-            </div>
-        </div>
-
-        {{-- Review Submission Form --}}
-        @auth
-            @if($userReview)
-                <div class="mb-8" x-data="{ editing: {{ $errors->has('rating') || $errors->has('comment') ? 'true' : 'false' }} }" @cancel-review-edit="editing = false">
-                    <div x-show="!editing" class="p-4 bg-[#f4f2ec] border border-[#e8e6df] rounded-xl flex flex-wrap items-center justify-between gap-3 text-xs text-gray-700">
-                        <span>Anda telah memberikan ulasan rating <strong>{{ $userReview->rating }} bintang</strong> untuk buku ini. Terima kasih atas partisipasi Anda!</span>
-                        <div class="flex items-center gap-3 shrink-0">
-                            <button type="button" @click="editing = true" class="font-bold text-[#0f2255] hover:underline">Ubah ulasan</button>
-                            <form method="POST" action="{{ route('books.reviews.destroy', [$book, $userReview]) }}" onsubmit="return confirm('Hapus ulasan Anda?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="font-bold text-red-600 hover:underline">Hapus</button>
-                            </form>
-                        </div>
-                    </div>
-                    <div x-show="editing" x-cloak>
-                        <x-review-form :book="$book" :review="$userReview" />
-                    </div>
-                </div>
-            @else
-                <div class="mb-10">
-                    <x-review-form :book="$book" />
+            @if($book->hasDiscount())
+                <div class="mt-7 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#f3d9c6] bg-[#fdf5ef] px-4 py-3">
+                    <p class="text-[13px] font-semibold text-[#8a3d0c]">Judul ini sedang didiskon {{ $book->discount_percent }}% — hemat Rp{{ number_format($book->price - $finalPrice, 0, ',', '.') }} per eksemplar.</p>
+                    <a href="{{ route('books.index', ['promo' => 1]) }}" class="text-[12px] font-bold text-[#c54e12] hover:underline">Lihat semua promo &rarr;</a>
                 </div>
             @endif
-        @else
-            <div class="mb-8 p-4 bg-[#f4f2ec] border border-[#e8e6df] rounded-xl flex items-center justify-between text-xs text-gray-600">
-                <span>Ingin membagikan ulasan Anda untuk buku ini?</span>
-                <a href="{{ route('login') }}" class="font-bold text-[#0f2255] hover:underline">Masuk untuk Menulis Ulasan &rarr;</a>
-            </div>
-        @endauth
+        </div>
 
-        @if($reviews->isNotEmpty())
-            <div class="space-y-6">
-                @foreach($reviews as $rev)
-                    <div class="border-b border-[#f0eee6] last:border-0 pb-6 last:pb-0">
-                        <div class="flex items-start gap-3.5">
-                            <div class="w-9 h-9 rounded-full bg-[#0f2255] text-white flex items-center justify-center font-bold text-xs shrink-0">
+        {{-- Detail --}}
+        <div x-show="tab === 'detail'" x-cloak class="p-5 sm:p-8">
+            <dl class="grid grid-cols-1 gap-x-10 text-[13px] sm:grid-cols-2">
+                @php
+                    $specs = [
+                        'Judul' => $book->title,
+                        'Pengarang' => $book->author,
+                        'Penerbit' => $book->publisher ?: '—',
+                        'ISBN' => $book->isbn ?: '—',
+                        'Tahun terbit' => $book->year ?: '—',
+                        'Kategori' => $book->category->name ?? '—',
+                        'Harga cetak' => $book->hasDiscount() ? 'Rp'.number_format($book->price, 0, ',', '.') : '—',
+                        'Harga jual' => 'Rp'.number_format($finalPrice, 0, ',', '.'),
+                        'Stok tersedia' => (string) $book->stock,
+                        'Total terjual' => number_format($soldCount, 0, ',', '.').' eksemplar',
+                    ];
+                @endphp
+                @foreach($specs as $label => $value)
+                    <div class="flex justify-between gap-4 border-b border-[#f0eee6] py-2.5">
+                        <dt class="text-[#6b6f78]">{{ $label }}</dt>
+                        <dd class="text-right font-semibold text-[#17181c]">{{ $value }}</dd>
+                    </div>
+                @endforeach
+            </dl>
+        </div>
+
+        {{-- Ulasan --}}
+        <div x-show="tab === 'ulasan'" x-cloak class="p-5 sm:p-8">
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-[#f0eee6] pb-5">
+                <div class="flex items-end gap-3">
+                    <span class="font-serif-display text-4xl font-bold text-[#0f2255]">{{ number_format($rating, 1) }}</span>
+                    <div class="pb-1 text-[12px] text-[#6b6f78]">
+                        <div class="flex items-center gap-0.5 text-[#e0a80c]">
+                            @for($i = 1; $i <= 5; $i++)
+                                <svg class="h-3.5 w-3.5 {{ $i <= round($rating) ? 'fill-current stroke-current' : 'fill-transparent text-[#d8d4c8] stroke-current' }}" viewBox="0 0 24 24" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                            @endfor
+                        </div>
+                        <span>Dari {{ $reviewCount }} ulasan pembaca</span>
+                    </div>
+                </div>
+                @if($book->category)
+                    <a href="{{ route('books.index', ['category' => $book->category->slug, 'sort' => 'bestseller']) }}"
+                       class="text-[12px] font-semibold text-[#0f2255] hover:underline">Lihat buku terlaris lain</a>
+                @endif
+            </div>
+
+            @auth
+                @if($userReview)
+                    <div class="mt-6" x-data="{ editing: {{ $errors->has('rating') || $errors->has('comment') ? 'true' : 'false' }} }" @cancel-review-edit="editing = false">
+                        <div x-show="!editing" class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#e6e3db] bg-[#fafaf8] px-4 py-3 text-[13px] text-[#3f4451]">
+                            <span>Ulasan Anda saat ini: <strong class="text-[#0f2255]">{{ $userReview->rating }} bintang</strong>. Terima kasih sudah berbagi.</span>
+                            <div class="flex shrink-0 items-center gap-3 text-[12px] font-semibold">
+                                <button type="button" @click="editing = true" class="text-[#0f2255] hover:underline">Ubah ulasan</button>
+                                <form method="POST" action="{{ route('books.reviews.destroy', [$book, $userReview]) }}" onsubmit="return confirm('Hapus ulasan Anda?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-[#b42318] hover:underline">Hapus</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div x-show="editing" x-cloak class="mt-4">
+                            <x-review-form :book="$book" :review="$userReview" />
+                        </div>
+                    </div>
+                @else
+                    <div class="mt-6">
+                        <x-review-form :book="$book" />
+                    </div>
+                @endif
+            @else
+                <div class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#e6e3db] bg-[#fafaf8] px-4 py-3 text-[13px] text-[#3f4451]">
+                    <span>Bagikan kesan Anda setelah buku sampai di rumah.</span>
+                    <a href="{{ route('login') }}" class="font-semibold text-[#0f2255] hover:underline">Masuk untuk menulis ulasan &rarr;</a>
+                </div>
+            @endauth
+
+            @if($reviews->isNotEmpty())
+                <div class="mt-7 space-y-6">
+                    @foreach($reviews as $rev)
+                        <div class="flex items-start gap-3.5 border-b border-[#f0eee6] pb-6 last:border-0 last:pb-0">
+                            <div class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#0f2255] text-[12px] font-bold text-white">
                                 {{ strtoupper(substr($rev->user->name ?? 'P', 0, 1)) }}
                             </div>
-                            <div class="flex-1">
-                                <div class="flex flex-wrap items-center gap-2 mb-1.5">
-                                    <h4 class="font-bold text-sm text-gray-900">{{ $rev->user->name ?? 'Pembaca' }}</h4>
-                                    <div class="flex items-center text-amber-500">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                                    <h4 class="text-[13px] font-bold text-[#17181c]">{{ $rev->user->name ?? 'Pembaca' }}</h4>
+                                    <div class="flex items-center gap-0.5 text-[#e0a80c]">
                                         @for($i = 1; $i <= 5; $i++)
-                                            <svg class="h-3.5 w-3.5 {{ $i <= $rev->rating ? 'fill-current' : 'text-gray-200 fill-transparent stroke-current' }}" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
-                                            </svg>
+                                            <svg class="h-3.5 w-3.5 {{ $i <= $rev->rating ? 'fill-current stroke-current' : 'fill-transparent text-[#d8d4c8] stroke-current' }}" viewBox="0 0 24 24" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
                                         @endfor
                                     </div>
-                                    <span class="text-[11px] text-gray-400 font-mono">{{ $rev->created_at->translatedFormat('d M Y') }}</span>
+                                    <span class="text-[11px] text-[#9a9484]">{{ $rev->created_at->translatedFormat('d M Y') }}</span>
                                     @if(auth()->check() && auth()->user()->isAdmin() && $rev->user_id !== auth()->id())
                                         <form method="POST" action="{{ route('books.reviews.destroy', [$book, $rev]) }}" class="ml-auto" onsubmit="return confirm('Hapus ulasan ini sebagai admin?')">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="text-[11px] font-semibold text-red-600 hover:underline">Hapus ulasan</button>
+                                            <button type="submit" class="text-[11px] font-semibold text-[#b42318] hover:underline">Hapus</button>
                                         </form>
                                     @endif
                                 </div>
-                                <p class="text-sm text-gray-700 leading-relaxed font-serif italic">
-                                    &ldquo;{{ $rev->comment }}&rdquo;
-                                </p>
+                                <p class="mt-1.5 text-[14px] leading-relaxed text-[#3f4451]">{{ $rev->comment }}</p>
                             </div>
                         </div>
-                    </div>
-                @endforeach
+                    @endforeach
 
-                @if($reviews->hasPages())
-                    <div class="pt-6">{{ $reviews->links() }}</div>
-                @endif
-            </div>
-        @else
-            <div class="py-8 text-center text-gray-400 text-sm">
-                <p>Belum ada ulasan untuk judul ini. Jadilah pembaca pertama yang menuliskan kesan Anda setelah menerima pesanan!</p>
-            </div>
-        @endif
+                    @if($reviews->hasPages())
+                        <div class="border-t border-[#f0eee6] pt-5">{{ $reviews->links() }}</div>
+                    @endif
+                </div>
+            @else
+                <p class="py-8 text-center text-[13px] text-[#9a9484]">Belum ada ulasan untuk judul ini. Jadilah pembaca pertama yang menuliskan kesan Anda.</p>
+            @endif
+        </div>
     </div>
 
-    {{-- ── Related Books Shelf ────────────────────────────────── --}}
+    {{-- ── Rak buku terkait ───────────────────────────────────── --}}
     @if($related->isNotEmpty())
-        <div>
-            <div class="flex items-end justify-between mb-8 pb-4 border-b border-[#e8e6df]">
+        <section class="mt-12">
+            <div class="mb-5 flex items-end justify-between gap-4 border-b border-[#e6e3db] pb-3">
                 <div>
-                    <span class="text-xs font-bold uppercase tracking-widest text-[#e05c1a]">Rekomendasi Lainnya</span>
-                    <h2 class="font-serif-display font-bold text-2xl text-[#0f2255] mt-1">Buku Serupa yang Mungkin Anda Sukai</h2>
+                    <span class="eyebrow">Dari kategori yang sama</span>
+                    <h2 class="section-title mt-1">Buku Serupa</h2>
                 </div>
+                @if($book->category)
+                    <a href="{{ route('books.index', ['category' => $book->category->slug]) }}" class="text-[13px] font-semibold text-[#0f2255] hover:underline">Semua {{ $book->category->name }}</a>
+                @endif
             </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-                @foreach($related as $rel)
-                    @include('components.book-card', ['book' => $rel])
-                @endforeach
-            </div>
-        </div>
+            <x-book-shelf :books="$related" />
+        </section>
     @endif
 
-    {{-- ── First Chapter Preview Modal ("Baca Cuplikan") ──────── --}}
-    <div
-        x-show="previewOpen"
-        x-transition:enter="transition ease-out duration-200"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        x-transition:leave="transition ease-in duration-150"
-        x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0"
-        @keydown.escape.window="previewOpen = false"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-        style="display: none;"
-    >
-        <div
-            @click.away="previewOpen = false"
-            x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="opacity-0 scale-95"
-            x-transition:enter-end="opacity-100 scale-100"
-            class="bg-[#fafaf8] rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col border border-[#e8e6df] overflow-hidden"
-        >
-            {{-- Modal Header --}}
-            <div class="flex items-center justify-between p-6 pb-4 border-b border-[#e8e6df] bg-white">
-                <div class="flex items-center gap-3">
-                    <img src="{{ $book->coverUrl() }}" alt="{{ $book->title }}" class="w-10 h-14 object-cover rounded shadow-sm border border-gray-200" onerror="this.src='{{ asset('images/cover-placeholder.svg') }}'">
-                    <div>
-                        <span class="text-[10px] font-bold uppercase tracking-widest text-[#e05c1a]">Cuplikan Bacaan Eksklusif</span>
-                        <h3 class="font-serif-display font-bold text-lg text-[#0f2255] leading-tight">{{ $book->title }}</h3>
-                        <p class="text-xs text-gray-500 font-serif italic mt-0.5">Karya {{ $book->author }} &bull; {{ $book->publisher }}</p>
+    {{-- ── Bilah beli tempel (mobile) ─────────────────────────── --}}
+    @auth
+        @if($book->stock > 0)
+            <div class="fixed inset-x-0 bottom-0 z-30 border-t border-[#e6e3db] bg-white/95 px-4 py-3 backdrop-blur no-print lg:hidden">
+                <div class="mx-auto flex max-w-[1400px] items-center gap-3">
+                    <div class="min-w-0 flex-1">
+                        <p class="truncate text-[12px] font-semibold text-[#6b6f78]">{{ Str::limit($book->title, 24) }}</p>
+                        <p class="font-serif-display text-[17px] font-bold {{ $book->hasDiscount() ? 'text-[#e05c1a]' : 'text-[#0f2255]' }}">Rp{{ number_format($finalPrice, 0, ',', '.') }}</p>
+                    </div>
+                    <div class="flex h-10 shrink-0 items-center overflow-hidden rounded-lg border border-[#dcd8cd]">
+                        <button type="button" @click="if (qty > 1) qty--" :disabled="qty <= 1" class="grid h-full w-8 place-items-center text-base hover:bg-[#f4f2ec] disabled:opacity-35" aria-label="Kurangi jumlah">&minus;</button>
+                        <span class="w-8 text-center text-sm font-bold text-[#0f2255]" x-text="qty"></span>
+                        <button type="button" @click="if (qty < max) qty++" :disabled="qty >= max" class="grid h-full w-8 place-items-center text-base hover:bg-[#f4f2ec] disabled:opacity-35" aria-label="Tambah jumlah">+</button>
+                    </div>
+                    <form method="POST" action="{{ route('books.cart.add', $book) }}" class="shrink-0">
+                        @csrf
+                        <input type="hidden" name="quantity" :value="qty">
+                        <button type="submit" class="btn-primary !px-4 !py-2.5 text-[13px]">Tambah</button>
+                    </form>
+                </div>
+            </div>
+        @endif
+    @endauth
+
+    {{-- ── Modal cuplikan ──────────────────────────────────────── --}}
+    <div x-show="previewOpen" x-cloak @keydown.escape.window="previewOpen = false"
+         class="fixed inset-0 z-50 flex items-end justify-center bg-black/55 sm:items-center sm:p-4"
+         x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+        <div @click.away="previewOpen = false"
+             class="flex max-h-[88vh] w-full flex-col overflow-hidden rounded-t-2xl border border-[#e6e3db] bg-[#fafaf8] sm:max-w-2xl sm:rounded-xl"
+             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+            <div class="flex items-center justify-between gap-4 border-b border-[#e6e3db] bg-white px-5 py-4">
+                <div class="flex min-w-0 items-center gap-3">
+                    <img src="{{ $book->coverUrl() }}" alt="" class="h-14 w-10 shrink-0 rounded border border-[#e6e3db] object-cover"
+                         onerror="this.src='{{ asset('images/cover-placeholder.svg') }}'">
+                    <div class="min-w-0">
+                        <span class="eyebrow">Cuplikan bacaan</span>
+                        <h3 class="truncate font-serif-display text-[17px] font-bold text-[#0f2255]">{{ $book->title }}</h3>
+                        <p class="truncate text-[12px] text-[#6b6f78]">{{ $book->author }}@if($book->publisher) &middot; {{ $book->publisher }}@endif</p>
                     </div>
                 </div>
-                <button @click="previewOpen = false" class="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
+                <button type="button" @click="previewOpen = false" class="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[#6b6f78] transition-colors hover:bg-[#f4f2ec] hover:text-[#17181c]" aria-label="Tutup cuplikan">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
 
-            {{-- Modal Body: Reading Experience --}}
-            <div class="overflow-y-auto p-6 sm:p-8 space-y-4 font-serif text-gray-800 leading-relaxed text-sm sm:text-base">
-                <div class="text-center pb-4 border-b border-[#e8e6df]">
-                    <span class="text-xs uppercase tracking-widest text-gray-400 font-sans">Bagian Pembuka</span>
-                    <h4 class="font-serif-display text-xl font-bold text-[#0f2255] mt-1">Bab 1: Awal Mula Perjalanan</h4>
+            <div class="overflow-y-auto px-5 py-6 sm:px-8">
+                <div class="border-b border-[#e8e6df] pb-4 text-center">
+                    <span class="eyebrow">Bagian pembuka</span>
+                    <h4 class="mt-1 font-serif-display text-xl font-bold text-[#0f2255]">{{ $book->title }}</h4>
                 </div>
 
-                <p class="first-letter:text-4xl first-letter:font-bold first-letter:text-[#0f2255] first-letter:float-left first-letter:mr-2 first-letter:font-serif">
-                    {{ $book->description }}
-                </p>
+                <div class="mx-auto mt-5 max-w-prose space-y-4 font-serif-display text-[15px] leading-[1.85] text-[#2c3038]">
+                    {!! nl2br(e($book->description)) !!}
+                </div>
 
-                <p>
-                    Waktu bergerak perlahan di antara hembusan angin pagi. Setiap kata yang tertulis di lembaran ini adalah saksi bisu dari pergulatan jiwa dan pencarian makna yang tak pernah usai. Ada misteri yang tersembunyi di balik setiap langkah, dan rahasia yang hanya akan terbuka bagi mereka yang berani terus membaca hingga lembar terakhir.
-                </p>
-
-                <p>
-                    "Sebuah buku yang baik tidak sekadar menceritakan sebuah kisah," tulis seorang kritikus sastra, "tetapi ia membangun sebuah cermin tempat kita melihat pantulan diri kita sendiri, ketakutan kita, dan harapan terbesar kita."
-                </p>
-
-                <div class="mt-8 p-5 bg-[#f4f2ec] rounded-xl border border-[#e8e6df] text-center">
-                    <p class="text-xs text-gray-600 font-serif italic mb-3">Ini adalah akhir dari cuplikan bab pembuka. Miliki buku fisik edisi resmi ini untuk menikmati keseluruhan kisah dan kedalaman pesonanya.</p>
-                    <div class="flex items-center justify-center gap-3">
-                        @if($book->stock > 0)
-                            <form method="POST" action="{{ route('books.cart.add', $book) }}">
-                                @csrf
-                                <input type="hidden" name="quantity" value="1">
-                                <button type="submit" class="btn-primary text-xs py-2 px-5">
-                                    Beli Buku Sekarang (Rp{{ number_format($book->finalPrice(), 0, ',', '.') }})
-                                </button>
-                            </form>
+                <div class="mt-7 rounded-lg border border-[#e6e3db] bg-white p-4 text-center">
+                    <p class="text-[12px] text-[#6b6f78]">Cuplikan berakhir di sini. Buku fisik edisi resmi memuat seluruh isi cerita.</p>
+                    <div class="mt-3 flex flex-wrap items-center justify-center gap-2.5">
+                        @if($book->stock > 0 && auth()->check())
+                            <button type="button" @click="previewOpen = false; document.getElementById('buy-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' })"
+                                    class="btn-primary btn-sm">Beli Rp{{ number_format($finalPrice, 0, ',', '.') }}</button>
                         @endif
-                        <button type="button" @click="previewOpen = false" class="btn-outline text-xs py-2 px-4">
-                            Tutup Cuplikan
-                        </button>
+                        <button type="button" @click="previewOpen = false" class="btn-ghost btn-sm">Tutup</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
 </div>
 @endsection
-

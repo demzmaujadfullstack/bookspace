@@ -27,6 +27,11 @@ class HelpController extends Controller
 
         $settings = Setting::values();
 
+        $openConversation = $user->conversations()
+            ->where('status', Conversation::OPEN)
+            ->latest('last_message_at')
+            ->first();
+
         $faqs = [
             [
                 'q' => 'Bagaimana cara membeli buku di BOOKSPACE?',
@@ -50,7 +55,7 @@ class HelpController extends Controller
             ],
         ];
 
-        return view('help.index', compact('conversations', 'settings', 'faqs'));
+        return view('help.index', compact('conversations', 'settings', 'faqs', 'openConversation'));
     }
 
     public function startConversation(Request $request): RedirectResponse
@@ -58,6 +63,9 @@ class HelpController extends Controller
         $request->validate([
             'subject' => ['required', 'string', 'max:150'],
             'message' => ['required', 'string', 'max:2000'],
+        ], [
+            'subject.required' => 'Subjek pertanyaan wajib diisi agar admin mudah menindaklanjuti.',
+            'message.required' => 'Tuliskan pertanyaan atau kendala Anda terlebih dahulu.',
         ]);
 
         /** @var User $user */
@@ -93,7 +101,12 @@ class HelpController extends Controller
 
         $conversation->load(['messages.sender']);
 
-        return view('help.chat', compact('conversation'));
+        $conversations = $user->conversations()
+            ->withCount(['messages as unread_count' => fn ($query) => $query->where('sender_id', '!=', $user->id)->whereNull('read_at')])
+            ->latest('last_message_at')
+            ->get();
+
+        return view('help.chat', compact('conversation', 'conversations'));
     }
 
     public function sendMessage(Request $request, Conversation $conversation): RedirectResponse|JsonResponse

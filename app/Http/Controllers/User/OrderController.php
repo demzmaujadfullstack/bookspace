@@ -11,17 +11,38 @@ use Illuminate\View\View;
 
 class OrderController extends Controller
 {
+    /** Kelompok status untuk chip penyaring daftar pesanan. */
+    private const STATUS_GROUPS = [
+        'perlu-tindakan' => ['label' => 'Perlu Tindakan', 'statuses' => [Order::PENDING, Order::MENUNGGU_PEMBAYARAN, Order::MENUNGGU_VERIFIKASI]],
+        'diproses' => ['label' => 'Diproses', 'statuses' => [Order::DIBAYAR, Order::DIPROSES]],
+        'dikirim' => ['label' => 'Dikirim', 'statuses' => [Order::DIKIRIM]],
+        'selesai' => ['label' => 'Selesai', 'statuses' => [Order::SELESAI]],
+        'dibatalkan' => ['label' => 'Dibatalkan', 'statuses' => [Order::DIBATALKAN]],
+    ];
+
     public function index(Request $request): View
     {
         /** @var User $user */
         $user = $request->user();
 
+        $status = $request->query('status');
+        $status = is_string($status) && array_key_exists($status, self::STATUS_GROUPS) ? $status : null;
+
         $orders = $user->orders()
             ->with(['items.book', 'latestPayment'])
+            ->when($status, fn ($query) => $query->whereIn('status', self::STATUS_GROUPS[$status]['statuses']))
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
-        return view('user.orders.index', compact('orders'));
+        $statusCounts = $user->orders()
+            ->selectRaw('status, count(*) as aggregate')
+            ->groupBy('status')
+            ->pluck('aggregate', 'status');
+
+        $groups = self::STATUS_GROUPS;
+
+        return view('user.orders.index', compact('orders', 'status', 'statusCounts', 'groups'));
     }
 
     public function show(Request $request, Order $order): View

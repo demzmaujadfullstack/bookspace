@@ -11,7 +11,7 @@ class BannerSeeder extends Seeder
     {
         $banners = [
             [
-                'title' => 'Koleksi Novel Terlaris 2024',
+                'title' => 'Koleksi Novel Terbaik Tahun Ini',
                 'subtitle' => 'Temukan kisah-kisah terbaik dari penulis lokal dan internasional',
                 'image' => 'banners/banner-1.jpg',
                 'cta_text' => 'Lihat Koleksi',

@@ -1,223 +1,167 @@
-﻿@extends('layouts.bookspace')
+@extends('layouts.bookspace')
 
 @section('title', 'Keranjang Belanja')
 
 @section('content')
-<div class="px-5 md:px-8 py-8 md:py-12">
+@php
+    $items = $cart?->items ?? collect();
+    $subtotal = $items->sum(fn ($item) => $item->subtotal());
+    $totalQty = (int) $items->sum('quantity');
+    $freeShipThreshold = (int) \App\Models\Setting::value('free_shipping_threshold', 200000) ?: 200000;
+    $remaining = max(0, $freeShipThreshold - $subtotal);
+    $progress = min(100, (int) round(($subtotal / $freeShipThreshold) * 100));
+@endphp
 
-    {{-- ── Checkout Steps Indicator ───────────────────────────── --}}
-    <div class="max-w-2xl mx-auto mb-10">
-        <div class="flex items-center justify-between text-xs font-semibold">
-            <div class="flex items-center gap-2 text-[#0f2255]">
-                <span class="w-7 h-7 rounded-full bg-[#0f2255] text-white flex items-center justify-center font-bold">1</span>
-                <span>Keranjang Belanja</span>
-            </div>
-            <div class="flex-1 h-0.5 bg-[#e8e6df] mx-4"></div>
-            <div class="flex items-center gap-2 text-gray-400">
-                <span class="w-7 h-7 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-bold">2</span>
-                <span>Pengiriman &amp; Alamat</span>
-            </div>
-            <div class="flex-1 h-0.5 bg-[#e8e6df] mx-4"></div>
-            <div class="flex items-center gap-2 text-gray-400">
-                <span class="w-7 h-7 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-bold">3</span>
-                <span>Pembayaran</span>
-            </div>
-        </div>
-    </div>
+<div class="shell py-6 md:py-8">
 
-    @if(!$cart || $cart->items->isEmpty())
-        {{-- Empty State --}}
-        <div class="max-w-xl mx-auto bg-white border border-[#e8e6df] rounded-2xl p-12 text-center shadow-sm my-8">
-            <div class="w-20 h-20 bg-[#f4f2ec] rounded-full flex items-center justify-center mx-auto mb-5 text-[#0f2255]">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                </svg>
+    <x-checkout-steps :step="1" />
+
+    @if($items->isEmpty())
+        <div class="card mx-auto max-w-xl !p-10 text-center">
+            <div class="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#f4f2ec] text-[#0f2255]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
             </div>
-            <h2 class="font-serif-display font-bold text-2xl text-[#0f2255] mb-2">Keranjang Belanja Masih Kosong</h2>
-            <p class="text-sm text-gray-500 mb-8 max-w-sm mx-auto leading-relaxed">
-                Anda belum memasukkan judul buku apa pun ke dalam keranjang. Mulailah menjelajahi koleksi kami untuk menemukan bacaan berikutnya.
-            </p>
-            <a href="{{ route('books.index') }}" class="btn-orange text-sm font-semibold px-8 py-3.5 rounded-lg shadow-md">
-                Jelajahi Koleksi Buku
-            </a>
+            <h1 class="page-title mt-5">Keranjang Anda Masih Kosong</h1>
+            <p class="muted mx-auto mt-2 max-w-sm">Belum ada judul yang disimpan. Jelajahi koleksi kami untuk menemukan bacaan berikutnya.</p>
+            <div class="mt-6 flex flex-wrap items-center justify-center gap-2.5">
+                <a href="{{ route('books.index') }}" class="btn-primary">Jelajahi Semua Buku</a>
+                <a href="{{ route('books.index', ['promo' => 1]) }}" class="btn-ghost">Lihat Buku Diskon</a>
+            </div>
         </div>
     @else
-        @php
-            $items = $cart->items;
-            $subtotal = $items->sum(fn($item) => $item->subtotal());
-            $freeShippingThreshold = (int) \App\Models\Setting::value('free_shipping_threshold', 200000) ?: 200000;
-            $remainingForFreeShipping = max(0, $freeShippingThreshold - $subtotal);
-            $progressPercent = min(100, round(($subtotal / $freeShippingThreshold) * 100));
-        @endphp
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-
-            {{-- ── Left: Items Table / List (8 cols) ──────────── --}}
+            {{-- Daftar item --}}
             <div class="lg:col-span-8">
-                <div class="bg-white border border-[#e8e6df] rounded-2xl p-6 shadow-sm mb-6">
-                    <div class="flex items-center justify-between pb-4 border-b border-[#f0eee6] mb-6">
-                        <h1 class="font-serif-display font-bold text-xl text-[#0f2255]">
-                            Daftar Buku Pilihan Anda ({{ $items->sum('quantity') }} Item)
-                        </h1>
-                        <a href="{{ route('books.index') }}" class="text-xs text-[#0f2255] hover:text-[#e05c1a] font-semibold flex items-center gap-1 transition-colors">
-                            <span>+ Tambah Buku Lain</span>
-                        </a>
+                <div class="card overflow-hidden">
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[#e6e3db] px-5 py-4">
+                        <h1 class="section-title !text-xl">Keranjang Belanja</h1>
+                        <span class="text-[13px] text-[#6b6f78]">{{ $totalQty }} eksemplar dari {{ $items->count() }} judul</span>
                     </div>
 
-                    {{-- Items List --}}
-                    <div class="divide-y divide-[#f0eee6]">
+                    <ul class="divide-y divide-[#f0eee6]">
                         @foreach($items as $item)
-                        <div class="py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" id="cart-item-{{ $item->id }}">
-
-                            {{-- Book Cover + Info --}}
-                            <div class="flex items-center gap-4 flex-1 min-w-0">
-                                <a href="{{ route('books.show', $item->book->slug) }}" class="relative block w-16 h-24 shrink-0 rounded shadow-sm overflow-hidden bg-white border border-[#e8e6df]">
-                                    <img src="{{ $item->book->coverUrl() }}" alt="{{ $item->book->title }}" class="w-full h-full object-cover" onerror="this.src='{{ asset('images/cover-placeholder.svg') }}'">
-                                    <div class="absolute inset-y-0 left-0 w-2 bg-gradient-to-r from-black/20 to-transparent pointer-events-none"></div>
+                            <li class="flex gap-4 px-5 py-4">
+                                <a href="{{ route('books.show', $item->book->slug) }}" class="relative block h-24 w-16 shrink-0 overflow-hidden rounded border border-[#e6e3db] bg-white">
+                                    <img src="{{ $item->book->coverUrl() }}" alt="Sampul {{ $item->book->title }}" class="h-full w-full object-cover" loading="lazy"
+                                         onerror="this.src='{{ asset('images/cover-placeholder.svg') }}'">
+                                    <span class="pointer-events-none absolute inset-y-0 left-0 w-1.5 bg-gradient-to-r from-black/20 to-transparent"></span>
                                 </a>
 
-                                <div class="min-w-0 flex-1">
-                                    <span class="text-[10px] text-[#e05c1a] font-bold uppercase tracking-wider block mb-0.5">{{ $item->book->category->name ?? 'Buku' }}</span>
-                                    <a href="{{ route('books.show', $item->book->slug) }}" class="font-serif-display font-bold text-sm text-gray-900 hover:text-[#0f2255] transition-colors leading-snug line-clamp-2 block mb-1">
-                                        {{ $item->book->title }}
-                                    </a>
-                                    <p class="text-xs text-gray-500 font-serif italic mb-1.5">{{ $item->book->author }}</p>
+                                <div class="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                    <div class="min-w-0">
+                                        <span class="eyebrow">{{ $item->book->category->name ?? 'Buku' }}</span>
+                                        <a href="{{ route('books.show', $item->book->slug) }}"
+                                           class="mt-1 block font-serif-display text-[15px] font-bold leading-snug text-[#0f2255] transition-colors hover:text-[#e05c1a]">
+                                            {{ $item->book->title }}
+                                        </a>
+                                        <p class="mt-0.5 text-[12px] text-[#6b6f78]">{{ $item->book->author }}</p>
 
-                                    {{-- Stock check indicator --}}
-                                    @if($item->book->stock === 0)
-                                        <span class="inline-block bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded">Stok Habis</span>
-                                    @elseif($item->book->stock < $item->quantity)
-                                        <span class="inline-block bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">Melebihi stok (Tersisa {{ $item->book->stock }})</span>
-                                    @endif
-                                </div>
-                            </div>
+                                        <div class="mt-2 flex flex-wrap items-center gap-2">
+                                            <span class="text-[13px] font-semibold text-[#17181c]">Rp{{ number_format($item->book->finalPrice(), 0, ',', '.') }}</span>
+                                            @if($item->book->hasDiscount())
+                                                <span class="text-[12px] text-[#a8a498] line-through">Rp{{ number_format($item->book->price, 0, ',', '.') }}</span>
+                                                <span class="pill bg-[#fdece2] font-bold text-[#c54e12]">-{{ $item->book->discount_percent }}%</span>
+                                            @endif
+                                        </div>
 
-                            {{-- Quantity Modifier & Price --}}
-                            <div class="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-0 border-gray-100">
-                                {{-- Qty Form — Alpine.js stepper, avoids @tailwindcss/forms padding bug on type=number --}}
-                                <form
-                                    method="POST"
-                                    action="{{ route('cart.items.update', $item) }}"
-                                    class="flex items-center"
-                                    x-data="{ qty: {{ $item->quantity }}, max: {{ $item->book->stock }} }"
-                                >
-                                    @csrf @method('PATCH')
-                                    <div class="flex items-center border border-[#dcd8cd] rounded-lg overflow-hidden bg-white shadow-xs">
-                                        <button
-                                            type="button"
-                                            @click="if (qty > 1) { qty--; $nextTick(() => $el.closest('form').submit()); }"
-                                            class="w-8 h-9 flex items-center justify-center text-gray-600 hover:bg-[#f4f2ec] hover:text-[#0f2255] font-bold text-base select-none transition-colors"
-                                            :disabled="qty <= 1"
-                                        >−</button>
-                                        <input
-                                            type="text"
-                                            inputmode="numeric"
-                                            name="quantity"
-                                            x-model="qty"
-                                            @change="qty = Math.max(1, Math.min(max, parseInt(qty) || 1)); $nextTick(() => $el.closest('form').submit());"
-                                            class="w-12 h-9 text-center text-sm font-bold text-gray-900 bg-white border-x border-[#dcd8cd] focus:outline-none focus:ring-0 p-0 m-0"
-                                            style="box-shadow:none"
-                                        >
-                                        <button
-                                            type="button"
-                                            @click="if (qty < max) { qty++; $nextTick(() => $el.closest('form').submit()); }"
-                                            class="w-8 h-9 flex items-center justify-center text-gray-600 hover:bg-[#f4f2ec] hover:text-[#0f2255] font-bold text-base select-none transition-colors"
-                                            :disabled="qty >= max"
-                                        >+</button>
+                                        @if($item->book->stock === 0)
+                                            <p class="mt-2 text-[12px] font-semibold text-[#b42318]">Stok habis — keluarkan item ini untuk melanjutkan.</p>
+                                        @elseif($item->book->stock < $item->quantity)
+                                            <p class="mt-2 text-[12px] font-semibold text-[#c54e12]">Melebihi stok, sisa {{ $item->book->stock }} eksemplar.</p>
+                                        @endif
                                     </div>
-                                </form>
 
-                                {{-- Price calculation --}}
-                                <div class="text-right min-w-[110px]">
-                                    <p class="font-serif-display font-bold text-base text-[#0f2255]">
-                                        Rp{{ number_format($item->subtotal(), 0, ',', '.') }}
-                                    </p>
-                                    <p class="text-[11px] text-gray-400">
-                                        Rp{{ number_format($item->book->finalPrice(), 0, ',', '.') }}/eks
-                                    </p>
+                                    <div class="flex items-center justify-between gap-4 sm:flex-col sm:items-end sm:gap-2">
+                                        <form method="POST" action="{{ route('cart.items.update', $item) }}" x-data="{ qty: {{ $item->quantity }}, max: {{ max($item->book->stock, 1) }} }">
+                                            @csrf
+                                            @method('PATCH')
+                                            <div class="flex h-9 items-center overflow-hidden rounded-lg border border-[#dcd8cd] bg-white">
+                                                <button type="button" @click="if (qty > 1) { qty--; $el.closest('form').submit(); }" :disabled="qty <= 1"
+                                                        class="grid h-full w-8 place-items-center text-base text-[#3f4451] hover:bg-[#f4f2ec] disabled:opacity-35" aria-label="Kurangi jumlah {{ $item->book->title }}">&minus;</button>
+                                                <input type="text" inputmode="numeric" name="quantity" x-model="qty" aria-label="Jumlah {{ $item->book->title }}"
+                                                       @change="qty = Math.max(1, Math.min(max, parseInt(qty) || 1)); $el.closest('form').submit();"
+                                                       class="h-full w-10 border-x border-[#dcd8cd] text-center text-[13px] font-bold text-[#0f2255] focus:outline-none" style="box-shadow:none">
+                                                <button type="button" @click="if (qty < max) { qty++; $el.closest('form').submit(); }" :disabled="qty >= max"
+                                                        class="grid h-full w-8 place-items-center text-base text-[#3f4451] hover:bg-[#f4f2ec] disabled:opacity-35" aria-label="Tambah jumlah {{ $item->book->title }}">+</button>
+                                            </div>
+                                        </form>
+
+                                        <p class="text-right font-serif-display text-[15px] font-bold text-[#0f2255]">Rp{{ number_format($item->subtotal(), 0, ',', '.') }}</p>
+
+                                        <form method="POST" action="{{ route('cart.items.destroy', $item) }}" onsubmit="return confirm('Keluarkan buku ini dari keranjang?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="inline-flex items-center gap-1 text-[12px] font-semibold text-[#9a9484] transition-colors hover:text-[#b42318]">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 7h12M9 7V4h6v3m-8 0l1 13h8l1-13"/></svg>
+                                                <span>Hapus</span>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
-
-                                {{-- Remove item button --}}
-                                <form method="POST" action="{{ route('cart.items.destroy', $item) }}" onsubmit="return confirm('Keluarkan buku ini dari keranjang?')">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="p-1.5 text-gray-400 hover:text-red-600 transition-colors rounded hover:bg-red-50" title="Hapus dari keranjang">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                        </svg>
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
+                            </li>
                         @endforeach
+                    </ul>
+
+                    <div class="border-t border-[#e6e3db] bg-[#fafaf8] px-5 py-3.5">
+                        <a href="{{ route('books.index') }}" class="text-[13px] font-semibold text-[#0f2255] hover:underline">&larr; Tambah buku lain dari katalog</a>
                     </div>
                 </div>
 
-                {{-- Guarantee Note in Cart --}}
-                <div class="bg-[#fafaf8] border border-[#e8e6df] rounded-xl p-4 flex items-center gap-3 text-xs text-gray-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                    </svg>
-                    <span><strong>Ketentuan Stok USK:</strong> Stok buku belum berkurang saat masih di keranjang. Stok hanya akan terpotong secara resmi setelah pembayaran Anda terverifikasi oleh admin.</span>
-                </div>
+                <p class="muted mt-4 flex items-start gap-2 rounded-lg border border-[#e6e3db] bg-white px-4 py-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-4 w-4 shrink-0 text-[#0f2255]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Stok belum berkurang selama buku berada di keranjang. Jumlah baru dipotong setelah pembayaran pesanan Anda terverifikasi oleh admin.
+                </p>
             </div>
 
-            {{-- ── Right: Order Summary Box (4 cols) ──────────── --}}
+            {{-- Ringkasan --}}
             <div class="lg:col-span-4">
-                <div class="bg-white border border-[#e8e6df] rounded-2xl p-6 sticky top-28 shadow-sm">
-                    <h3 class="font-serif-display font-bold text-lg text-[#0f2255] mb-4 pb-3 border-b border-[#f0eee6]">
-                        Ringkasan Belanja
-                    </h3>
+                <div class="card sticky top-[108px] overflow-hidden">
+                    <h2 class="border-b border-[#e6e3db] px-5 py-4 font-serif-display text-[17px] font-bold text-[#0f2255]">Ringkasan Belanja</h2>
 
-                    {{-- Free shipping progress bar --}}
-                    <div class="bg-[#fafaf8] border border-[#e8e6df] rounded-xl p-3.5 mb-5 text-xs">
-                        @if($remainingForFreeShipping > 0)
-                            <p class="text-gray-600 mb-2">
-                                Belanja <strong class="text-[#e05c1a]">Rp{{ number_format($remainingForFreeShipping, 0, ',', '.') }}</strong> lagi untuk mendapatkan <strong>Gratis Ongkir</strong>!
-                            </p>
-                            <div class="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
-                                <div class="bg-[#e05c1a] h-full rounded-full transition-all duration-500" style="width: {{ $progressPercent }}%"></div>
+                    <div class="px-5 pt-4">
+                        @if($remaining > 0)
+                            <p class="text-[12px] text-[#3f4451]">Tambah Rp{{ number_format($remaining, 0, ',', '.') }} lagi untuk <strong class="text-[#c54e12]">gratis ongkir</strong>.</p>
+                            <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-[#eae7de]">
+                                <div class="h-full rounded-full bg-[#e05c1a] transition-all duration-500" style="width: {{ $progress }}%"></div>
                             </div>
                         @else
-                            <div class="flex items-center gap-1.5 text-emerald-700 font-semibold">
-                                <span>🎉 Selamat! Pesanan Anda berhak atas <strong>Gratis Ongkir</strong>.</span>
-                            </div>
+                            <p class="flex items-center gap-2 rounded-lg bg-[#eaf5ee] px-3 py-2 text-[12px] font-semibold text-emerald-800">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                Total belanja Anda sudah memenuhi syarat gratis ongkir.
+                            </p>
                         @endif
                     </div>
 
-                    {{-- Cost details --}}
-                    <div class="space-y-3 text-xs mb-5">
-                        <div class="flex justify-between text-gray-600">
-                            <span>Subtotal Buku ({{ $items->sum('quantity') }} eks)</span>
-                            <span class="font-semibold text-gray-900 font-mono">Rp{{ number_format($subtotal, 0, ',', '.') }}</span>
+                    <dl class="space-y-2.5 px-5 py-4 text-[13px]">
+                        <div class="flex justify-between">
+                            <dt class="text-[#6b6f78]">Subtotal ({{ $totalQty }} eks)</dt>
+                            <dd class="font-semibold text-[#17181c]">Rp{{ number_format($subtotal, 0, ',', '.') }}</dd>
                         </div>
-                        <div class="flex justify-between text-gray-600">
-                            <span>Perkiraan Ongkos Kirim</span>
-                            <span class="text-gray-500 italic">Dihitung di checkout</span>
+                        @if($items->contains(fn ($item) => $item->book->hasDiscount()))
+                            <div class="flex justify-between">
+                                <dt class="text-[#6b6f78]">Total potongan</dt>
+                                <dd class="font-semibold text-[#c54e12]">-Rp{{ number_format($items->sum(fn ($item) => ($item->book->price - $item->book->finalPrice()) * $item->quantity), 0, ',', '.') }}</dd>
+                            </div>
+                        @endif
+                        <div class="flex justify-between">
+                            <dt class="text-[#6b6f78]">Ongkos kirim</dt>
+                            <dd class="text-[#9a9484]">Dihitung di langkah berikutnya</dd>
                         </div>
+                    </dl>
+
+                    <div class="flex items-baseline justify-between border-t border-[#e6e3db] px-5 py-4">
+                        <span class="text-[13px] font-semibold text-[#17181c]">Total sementara</span>
+                        <span class="font-serif-display text-[22px] font-bold text-[#0f2255]">Rp{{ number_format($subtotal, 0, ',', '.') }}</span>
                     </div>
 
-                    <div class="border-t border-[#f0eee6] pt-4 mb-6">
-                        <div class="flex items-baseline justify-between">
-                            <span class="font-serif-display font-bold text-base text-gray-900">Total Sementara</span>
-                            <span class="font-serif-display font-bold text-2xl text-[#e05c1a]">
-                                Rp{{ number_format($subtotal, 0, ',', '.') }}
-                            </span>
-                        </div>
+                    <div class="space-y-2.5 px-5 pb-5">
+                        <a href="{{ route('checkout.index') }}" class="btn-primary w-full !py-3">Lanjut ke Pengiriman</a>
+                        <a href="{{ route('wishlist.index') }}" class="block text-center text-[12px] font-semibold text-[#6b6f78] transition-colors hover:text-[#0f2255]">Pindah dari daftar favorit</a>
                     </div>
-
-                    {{-- Checkout Button --}}
-                    <a href="{{ route('checkout.index') }}" class="w-full bg-[#0f2255] hover:bg-[#1a3380] text-white font-semibold py-3.5 px-4 rounded-xl text-center block transition-all shadow-md text-sm tracking-wide">
-                        Lanjut ke Alamat Pengiriman &rarr;
-                    </a>
-
-                    <a href="{{ route('books.index') }}" class="block w-full text-center text-xs text-gray-500 hover:text-[#0f2255] mt-4 transition-colors font-medium">
-                        &larr; Kembali Menjelajah Koleksi
-                    </a>
                 </div>
             </div>
-
         </div>
     @endif
 </div>
 @endsection
-

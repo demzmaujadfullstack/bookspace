@@ -9,6 +9,11 @@
         scroll-behavior: smooth;
     }
 
+    /* Konten Alpine yang belum siap jangan sempat berkedip saat halaman dimuat. */
+    [x-cloak] {
+        display: none !important;
+    }
+
     body {
         font-family: 'Inter', sans-serif;
         -webkit-font-smoothing: antialiased;
@@ -31,68 +36,80 @@
 }
 
 @layer components {
-    /* ─── Book Card ─────────────────────────── */
-    .book-card {
-        display: flex;
-        flex-direction: column;
-        background: #fff;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    /* ─── Page Shell ────────────────────────────
+       Satu sistem lebar halaman: konten memakai layar penuh sampai 1400px,
+       dengan gutter yang membesar bertahap di tablet dan desktop. */
+    .shell {
+        @apply mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8;
     }
 
-    .book-card:hover {
-        transform: translateY(-3px);
+    .shell-wide {
+        @apply mx-auto w-full max-w-[1680px] px-4 sm:px-6 lg:px-8;
     }
 
-    .book-card:hover .book-cover {
-        transform: scale(1.03);
+    .shell-narrow {
+        @apply mx-auto w-full max-w-[1080px] px-4 sm:px-6 lg:px-8;
     }
 
-    /* ─── Carousel ──────────────────────────── */
-    .carousel-slide {
-        display: none;
-        opacity: 0;
-        transition: opacity 0.5s ease;
+    /* Kolom baca untuk teks panjang (privasi, syarat & ketentuan). */
+    .shell-measure {
+        @apply mx-auto w-full max-w-[740px] px-4 sm:px-6 lg:px-8;
     }
 
-    .carousel-slide.active {
-        display: flex;
-        opacity: 1;
+    /* ─── Surfaces ────────────────────────────── */
+    .card {
+        @apply bg-white border border-[#e6e3db] rounded-xl;
     }
 
-    /* ─── Section Heading Style ─────────────── */
-    .section-heading {
-        font-family: 'Lora', Georgia, serif;
-        font-weight: 700;
-        letter-spacing: -0.02em;
-        color: #0f2255;
+    .card-pad {
+        @apply p-4 sm:p-6;
     }
 
-    .section-eyebrow {
-        font-size: 0.6875rem;
-        font-weight: 700;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: #e05c1a;
+    /* ─── Text ────────────────────────────────── */
+    .eyebrow {
+        @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8b8578];
     }
 
-    /* ─── Pill / Badge ──────────────────────── */
-    .badge-discount {
-        font-size: 0.6875rem;
-        font-weight: 700;
-        line-height: 1;
-        background: #e05c1a;
-        color: #fff;
-        padding: 2px 7px;
-        border-radius: 3px;
+    .muted {
+        @apply text-[13px] leading-relaxed text-[#6b6f78];
     }
 
-    .badge-sold-out {
-        font-size: 0.6875rem;
-        font-weight: 600;
-        background: #4b5563;
-        color: #fff;
-        padding: 2px 7px;
-        border-radius: 3px;
+    .page-title {
+        @apply font-serif-display font-bold text-[#0f2255] text-[22px] leading-tight sm:text-[28px];
+    }
+
+    .section-title {
+        @apply font-serif-display font-bold text-[#0f2255] text-xl leading-snug sm:text-2xl;
+    }
+
+    /* ─── Form ────────────────────────────────── */
+    .field {
+        @apply w-full rounded-lg border border-[#dcd8cd] bg-white px-3.5 py-2.5 text-sm text-[#17181c]
+               placeholder:text-[#a8a498] transition
+               focus:border-[#0f2255] focus:outline-none focus:ring-2 focus:ring-[#0f2255]/10;
+    }
+
+    .field-label {
+        @apply mb-1.5 block text-[12px] font-semibold uppercase tracking-wide text-[#3f4451];
+    }
+
+    .field-error {
+        @apply mt-1.5 text-[12px] text-[#b42318];
+    }
+
+    /* ─── Buttons ─────────────────────────────── */
+    .btn-ghost {
+        @apply inline-flex items-center justify-center gap-2 rounded-lg border border-[#dcd8cd] bg-white
+               px-4 py-2.5 text-sm font-semibold text-[#0f2255] transition hover:bg-[#f4f2ec];
+    }
+
+    .btn-sm {
+        @apply px-3 py-1.5 text-[13px];
+    }
+
+    /* ─── Status pill ─────────────────────────── */
+    .pill {
+        @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-semibold;
     }
 
     /* ─── Buttons ───────────────────────────── */
@@ -106,7 +123,7 @@
         font-weight: 600;
         font-size: 0.875rem;
         padding: 0.6rem 1.4rem;
-        border-radius: 6px;
+        border-radius: 0.5rem;
         transition: background-color 0.15s ease;
     }
 
@@ -124,7 +141,7 @@
         font-weight: 600;
         font-size: 0.875rem;
         padding: 0.6rem 1.4rem;
-        border-radius: 6px;
+        border-radius: 0.5rem;
         transition: background-color 0.15s ease;
     }
 
@@ -142,7 +159,7 @@
         font-weight: 600;
         font-size: 0.875rem;
         padding: 0.55rem 1.4rem;
-        border-radius: 6px;
+        border-radius: 0.5rem;
         border: 1.5px solid #0f2255;
         transition: all 0.15s ease;
     }
@@ -151,91 +168,24 @@
         background-color: #0f2255;
         color: #fff;
     }
-
-    /* ─── Line Clamp ────────────────────────── */
-    .line-clamp-2 {
-        overflow: hidden;
-        display: -webkit-box;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 2;
-    }
-
-    .line-clamp-3 {
-        overflow: hidden;
-        display: -webkit-box;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 3;
-    }
-
-    /* ─── Category Chip ─────────────────────── */
-    .category-chip {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 1rem;
-        background: #fff;
-        border: 1px solid #e8e6e0;
-        border-radius: 10px;
-        text-align: center;
-        transition: border-color 0.15s, box-shadow 0.15s;
-        text-decoration: none;
-    }
-
-    .category-chip:hover {
-        border-color: #e05c1a;
-        box-shadow: 0 4px 16px rgba(224, 92, 26, 0.12);
-    }
-
-    /* ─── Divider ornament ──────────────────── */
-    .divider-ornament {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        color: #c8bfb0;
-    }
-
-    .divider-ornament::before,
-    .divider-ornament::after {
-        content: '';
-        flex: 1;
-        height: 1px;
-        background: #e8e6e0;
-    }
 }
 
 @layer utilities {
-    .text-navy {
-        color: #0f2255;
+    /* Baris chip yang bisa digeser horizontal tanpa scrollbar mengganggu. */
+    .chip-rail {
+        scrollbar-width: none;
     }
 
-    .bg-navy {
-        background-color: #0f2255;
-    }
-
-    .text-orange-brand {
-        color: #e05c1a;
-    }
-
-    .bg-cream {
-        background-color: #faf8f4;
-    }
-
-    .bg-parchment {
-        background-color: #f5f1ea;
+    .chip-rail::-webkit-scrollbar {
+        display: none;
     }
 }
 
 /* ─── Print Styles for Invoice Receipt ───────────────────────── */
 @media print {
-    /* Hide navigation, header, footer, interactive buttons */
-    nav,
-    header,
-    footer,
-    aside,
-    button,
-    .no-print,
-    [x-data*="open"],
-    [x-data*="searchOpen"] {
+    /* Elemen interaktif ditandai .no-print pada halamannya sendiri; jangan
+       menyembunyikan tag nav/header/footer/aside yang kini dipakai di dalam kartu. */
+    .no-print {
         display: none !important;
     }
 
@@ -246,13 +196,16 @@
         line-height: 1.4;
     }
 
-    .max-w-3xl,
-    .max-w-4xl {
+    .shell,
+    .shell-wide,
+    .shell-narrow,
+    .shell-measure {
         max-width: 100% !important;
         margin: 0 !important;
         padding: 0 !important;
     }
 
+    .card,
     .bg-white {
         background: transparent !important;
     }

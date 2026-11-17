@@ -1,331 +1,254 @@
-﻿@extends('layouts.bookspace')
+@extends('layouts.bookspace')
 
 @section('title', 'Alamat Pengiriman & Pembayaran')
 
 @section('content')
-<div class="px-5 md:px-8 py-8 md:py-12">
+@php
+    $freeShipThreshold = (int) \App\Models\Setting::value('free_shipping_threshold', 200000) ?: 200000;
+    $shippingFree = $subtotal >= $freeShipThreshold;
+    $totalQty = (int) $cart->items->sum('quantity');
 
-    {{-- ── Checkout Steps Indicator ───────────────────────────── --}}
-    <div class="max-w-2xl mx-auto mb-10">
-        <div class="flex items-center justify-between text-xs font-semibold">
-            <div class="flex items-center gap-2 text-emerald-700">
-                <span class="w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">✓</span>
-                <span>Keranjang</span>
+    $savedAddresses = $addresses->mapWithKeys(fn ($a) => [
+        (string) $a->id => [
+            'recipient_name' => $a->recipient_name,
+            'phone' => $a->phone,
+            'address' => $a->address,
+            'city' => $a->city,
+            'postal_code' => (string) $a->postal_code,
+        ],
+    ]);
+@endphp
+
+<div class="shell py-6 pb-28 md:py-8 lg:pb-14">
+
+    <x-checkout-steps :step="2" />
+
+    <form method="POST" action="{{ route('checkout.store') }}"
+          x-data="{ method: '{{ old('payment_method', 'transfer') }}', saved: {{ \Illuminate\Support\Js::from($savedAddresses) }}, picked: '' }">
+        @csrf
+
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
+
+            {{-- ── Kolom isian ────────────────────────────────── --}}
+            <div class="space-y-6 lg:col-span-8">
+
+                {{-- 1. Alamat --}}
+                <section class="card overflow-hidden">
+                    <header class="flex items-center gap-3 border-b border-[#e6e3db] px-5 py-4">
+                        <span class="grid h-7 w-7 place-items-center rounded-lg bg-[#0f2255] text-[12px] font-bold text-white">1</span>
+                        <div>
+                            <h2 class="font-serif-display text-[17px] font-bold text-[#0f2255]">Tujuan Pengiriman</h2>
+                            <p class="muted mt-0.5">Pastikan alamat lengkap agar paket tidak gagal kirim.</p>
+                        </div>
+                    </header>
+
+                    <div class="space-y-5 p-5">
+                        @if($addresses->isNotEmpty())
+                            <div>
+                                <label for="saved-address" class="field-label">Pakai alamat tersimpan</label>
+                                <select id="saved-address" x-model="picked"
+                                        @change="if (saved[picked]) { $refs.recipient.value = saved[picked].recipient_name; $refs.phone.value = saved[picked].phone; $refs.address.value = saved[picked].address; $refs.city.value = saved[picked].city; $refs.postal.value = saved[picked].postal_code }"
+                                        class="field">
+                                    <option value="">— Tulis alamat baru —</option>
+                                    @foreach($addresses as $savedAddress)
+                                        <option value="{{ $savedAddress->id }}">
+                                            {{ ($savedAddress->label ?: 'Alamat').' · ' }}{{ $savedAddress->recipient_name }}, {{ $savedAddress->fullAddress() }}@if($savedAddress->is_default) (utama)@endif
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <p class="mt-1.5 text-[12px] text-[#9a9484]">
+                                    Kelola alamat di <a href="{{ route('user.profile.edit') }}" class="font-semibold text-[#0f2255] hover:underline">Profil &rarr; Buku Alamat</a>.
+                                </p>
+                            </div>
+                        @endif
+
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <div>
+                                <label for="recipient_name" class="field-label">Nama penerima <span class="text-[#b42318]">*</span></label>
+                                <input type="text" id="recipient_name" name="recipient_name" x-ref="recipient" required
+                                       value="{{ old('recipient_name', $defaultAddress?->recipient_name ?? $user->name) }}" class="field">
+                                @error('recipient_name') <p class="field-error">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label for="phone" class="field-label">Nomor WhatsApp <span class="text-[#b42318]">*</span></label>
+                                <input type="tel" id="phone" name="phone" x-ref="phone" required placeholder="081234567890"
+                                       value="{{ old('phone', $defaultAddress?->phone ?? $user->phone) }}" class="field">
+                                @error('phone') <p class="field-error">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="address" class="field-label">Alamat lengkap <span class="text-[#b42318]">*</span></label>
+                            <textarea id="address" name="address" x-ref="address" rows="3" required
+                                      placeholder="Nama jalan, nomor rumah, RT/RW, kelurahan, kecamatan, kota, kode pos"
+                                      class="field">{{ old('address', $defaultAddress?->address) }}</textarea>
+                            @error('address') <p class="field-error">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <div>
+                                <label for="city" class="field-label">Kota / Kabupaten <span class="font-normal text-[#9a9484]">(wajib bila alamat disimpan)</span></label>
+                                <input type="text" id="city" name="city" x-ref="city" placeholder="Kota Administrasi Jakarta Pusat"
+                                       value="{{ old('city', $defaultAddress?->city) }}" class="field">
+                                @error('city') <p class="field-error">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label for="postal_code" class="field-label">Kode pos <span class="font-normal text-[#9a9484]">(opsional)</span></label>
+                                <input type="text" id="postal_code" name="postal_code" x-ref="postal" placeholder="10310"
+                                       value="{{ old('postal_code', $defaultAddress?->postal_code) }}" class="field">
+                                @error('postal_code') <p class="field-error">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+
+                        <div class="rounded-lg border border-[#e6e3db] bg-[#fafaf8] p-4">
+                            <label class="flex cursor-pointer items-start gap-3">
+                                <input type="checkbox" name="save_address" value="1" @checked(old('save_address', $addresses->isEmpty()))
+                                       class="mt-0.5 rounded border-[#dcd8cd] text-[#0f2255] focus:ring-[#0f2255]">
+                                <span class="text-[13px] text-[#3f4451]">
+                                    <span class="font-semibold text-[#17181c]">Simpan ke buku alamat saya</span>
+                                    <span class="mt-0.5 block text-[12px] text-[#6b6f78]">Berikutnya cukup pilih dari daftar tanpa menulis ulang.</span>
+                                </span>
+                            </label>
+                            <div class="mt-3">
+                                <input type="text" name="address_label" maxlength="60" value="{{ old('address_label') }}"
+                                       placeholder="Label alamat: Rumah, Kantor, Pondok (opsional)" class="field !py-2 !text-[13px]">
+                                @error('address_label') <p class="field-error">{{ $message }}</p> @enderror
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="note" class="field-label">Catatan pengemasan / pengiriman (opsional)</label>
+                            <input type="text" id="note" name="note" value="{{ old('note') }}"
+                                   placeholder="Contoh: bungkus ekstra rapi, titip pos satpam bila kosong" class="field">
+                            @error('note') <p class="field-error">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                </section>
+
+                {{-- 2. Metode pembayaran --}}
+                <section class="card overflow-hidden">
+                    <header class="flex items-center gap-3 border-b border-[#e6e3db] px-5 py-4">
+                        <span class="grid h-7 w-7 place-items-center rounded-lg bg-[#0f2255] text-[12px] font-bold text-white">2</span>
+                        <div>
+                            <h2 class="font-serif-display text-[17px] font-bold text-[#0f2255]">Metode Pembayaran</h2>
+                            <p class="muted mt-0.5">Pilih salah satu cara bayar resmi di bawah ini.</p>
+                        </div>
+                    </header>
+
+                    <div class="space-y-3 p-5">
+                        @php
+                            $methods = [
+                                'transfer' => [
+                                    'Transfer Bank Manual',
+                                    'BCA, Mandiri, BNI, BRI. Unggah bukti transfer setelah pesanan dibuat.',
+                                    'Verifikasi admin',
+                                ],
+                                'qris' => [
+                                    'QRIS',
+                                    'Pindai dengan GoPay, OVO, DANA, ShopeePay, Livin\', BRImo, atau BCA mobile.',
+                                    'Scan cepat',
+                                ],
+                                'cod' => [
+                                    'Bayar di Tempat (COD)',
+                                    'Bayar tunai ke kurir saat buku tiba di alamat Anda.',
+                                    'Tunai kurir',
+                                ],
+                            ];
+                        @endphp
+
+                        @foreach($methods as $value => [$name, $desc, $tag])
+                            <label class="block cursor-pointer rounded-xl border p-4 transition-all"
+                                   :class="method === '{{ $value }}' ? 'border-[#0f2255] bg-[#f7f9fd] ring-1 ring-[#0f2255]' : 'border-[#e6e3db] hover:border-[#c9c4b6]'">
+                                <span class="flex items-start gap-3">
+                                    <input type="radio" name="payment_method" value="{{ $value }}" x-model="method" class="mt-1 text-[#0f2255] focus:ring-0">
+                                    <span class="min-w-0 flex-1">
+                                        <span class="flex flex-wrap items-center justify-between gap-2">
+                                            <span class="font-semibold text-[14px] text-[#17181c]">{{ $name }}</span>
+                                            <span class="pill bg-[#f4f2ec] text-[#0f2255]">{{ $tag }}</span>
+                                        </span>
+                                        <span class="mt-1 block text-[12px] leading-relaxed text-[#6b6f78]">{{ $desc }}</span>
+                                    </span>
+                                </span>
+
+                                @if($value === 'transfer')
+                                    <div x-show="method === 'transfer'" x-transition class="mt-3 border-t border-[#e6e3db] pt-3 text-[12px] text-[#3f4451]">
+                                        <p>Rekening tujuan: <strong class="text-[#17181c]">{{ $settings['bank_name'] ?? 'BCA' }} — {{ $settings['bank_account_number'] ?? '1234567890' }}</strong> a.n. <strong class="text-[#17181c]">{{ $settings['bank_account_name'] ?? 'BOOKSPACE' }}</strong></p>
+                                        <p class="mt-1 text-[#c54e12]">Setelah checkout Anda diarahkan ke halaman invoice untuk mengunggah bukti transfer.</p>
+                                    </div>
+                                @elseif($value === 'qris')
+                                    <div x-show="method === 'qris'" x-transition class="mt-3 border-t border-[#e6e3db] pt-3 text-[12px] text-[#c54e12]">
+                                        Kode QRIS toko tampil di langkah berikutnya. Unggah tangkapan layar pembayarannya.
+                                    </div>
+                                @else
+                                    <div x-show="method === 'cod'" x-transition class="mt-3 border-t border-[#e6e3db] pt-3 text-[12px] text-[#3f4451]">
+                                        Pastikan nomor WhatsApp aktif; admin menghubungi Anda untuk mengonfirmasi kelayakan kirim.
+                                    </div>
+                                @endif
+                            </label>
+                        @endforeach
+
+                        @error('payment_method') <p class="field-error">{{ $message }}</p> @enderror
+                    </div>
+                </section>
             </div>
-            <div class="flex-1 h-0.5 bg-emerald-500 mx-4"></div>
-            <div class="flex items-center gap-2 text-[#0f2255]">
-                <span class="w-7 h-7 rounded-full bg-[#0f2255] text-white flex items-center justify-center font-bold">2</span>
-                <span>Alamat &amp; Pembayaran</span>
-            </div>
-            <div class="flex-1 h-0.5 bg-[#e8e6df] mx-4"></div>
-            <div class="flex items-center gap-2 text-gray-400">
-                <span class="w-7 h-7 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-bold">3</span>
-                <span>Konfirmasi &amp; Bukti</span>
+
+            {{-- ── Ringkasan pesanan ──────────────────────────── --}}
+            <div class="lg:col-span-4">
+                <aside class="card sticky top-[108px] overflow-hidden">
+                    <h2 class="border-b border-[#e6e3db] px-5 py-4 font-serif-display text-[17px] font-bold text-[#0f2255]">Ringkasan Pesanan</h2>
+
+                    <ul class="max-h-64 space-y-3 overflow-y-auto px-5 py-4">
+                        @foreach($cart->items as $item)
+                            <li class="flex items-center gap-3">
+                                <img src="{{ $item->book->coverUrl() }}" alt="" class="h-14 w-10 shrink-0 rounded border border-[#e6e3db] object-cover"
+                                     onerror="this.src='{{ asset('images/cover-placeholder.svg') }}'">
+                                <div class="min-w-0 flex-1">
+                                    <p class="truncate text-[13px] font-semibold text-[#17181c]">{{ $item->book->title }}</p>
+                                    <p class="mt-0.5 text-[12px] text-[#6b6f78]">{{ $item->quantity }} &times; Rp{{ number_format($item->book->finalPrice(), 0, ',', '.') }}</p>
+                                </div>
+                                <span class="shrink-0 text-[13px] font-bold text-[#0f2255]">Rp{{ number_format($item->subtotal(), 0, ',', '.') }}</span>
+                            </li>
+                        @endforeach
+                    </ul>
+
+                    <dl class="space-y-2.5 border-t border-[#e6e3db] px-5 py-4 text-[13px]">
+                        <div class="flex justify-between">
+                            <dt class="text-[#6b6f78]">Subtotal ({{ $totalQty }} eks)</dt>
+                            <dd class="font-semibold text-[#17181c]">Rp{{ number_format($subtotal, 0, ',', '.') }}</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-[#6b6f78]">Ongkos kirim</dt>
+                            @if($shippingFree)
+                                <dd class="font-semibold text-emerald-700">Gratis</dd>
+                            @else
+                                <dd class="text-[#6b6f78]">Dihitung admin (gratis di atas Rp{{ number_format($freeShipThreshold, 0, ',', '.') }})</dd>
+                            @endif
+                        </div>
+                    </dl>
+
+                    <div class="flex items-baseline justify-between border-t border-[#e6e3db] px-5 py-4">
+                        <span class="text-[13px] font-semibold text-[#17181c]">Total bayar</span>
+                        <span class="font-serif-display text-[22px] font-bold text-[#0f2255]">Rp{{ number_format($subtotal, 0, ',', '.') }}</span>
+                    </div>
+
+                    <div class="space-y-2.5 px-5 pb-5">
+                        <button type="submit" class="btn-primary w-full !py-3">Konfirmasi &amp; Lanjut Pembayaran</button>
+                        <a href="{{ route('cart.index') }}" class="block text-center text-[12px] font-semibold text-[#6b6f78] transition-colors hover:text-[#0f2255]">&larr; Periksa kembali keranjang</a>
+                    </div>
+                </aside>
             </div>
         </div>
-    </div>
 
-    <div class="mb-8">
-        <h1 class="font-serif-display font-bold text-2xl md:text-3xl text-[#0f2255]">
-            Checkout &amp; Pengiriman Buku
-        </h1>
-        <p class="text-xs sm:text-sm text-gray-500 mt-1">
-            Lengkapi data penerima dan pilih metode pembayaran resmi untuk meneruskan pesanan Anda.
-        </p>
-    </div>
-
-    @php
-        $savedAddresses = $addresses->mapWithKeys(fn ($a) => [
-            (string) $a->id => [
-                'recipient_name' => $a->recipient_name,
-                'phone' => $a->phone,
-                'address' => $a->address,
-                'city' => $a->city,
-                'postal_code' => (string) $a->postal_code,
-            ],
-        ]);
-    @endphp
-    <form method="POST" action="{{ route('checkout.store') }}" x-data="{ method: 'transfer', saved: {{ \Illuminate\Support\Js::from($savedAddresses) }}, picked: '' }">
-        @csrf
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-
-            {{-- ── LEFT: FORM INPUTS (8 cols) ─────────────────── --}}
-            <div class="lg:col-span-8 space-y-6">
-
-                {{-- 1. Informasi Penerima & Alamat --}}
-                <div class="bg-white border border-[#e8e6df] rounded-2xl p-6 md:p-8 shadow-sm">
-                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-[#f0eee6]">
-                        <span class="w-7 h-7 rounded-lg bg-[#f4f2ec] text-[#0f2255] font-serif-display font-bold text-sm flex items-center justify-center">1</span>
-                        <h2 class="font-serif-display font-bold text-lg text-[#0f2255]">Tujuan Pengiriman Paket</h2>
-                    </div>
-
-                    @if($addresses->isNotEmpty())
-                        <div class="mb-5">
-                            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
-                                Pakai Alamat Tersimpan
-                            </label>
-                            <select
-                                x-model="picked"
-                                @change="if (saved[picked]) { $refs.recipient.value = saved[picked].recipient_name; $refs.phone.value = saved[picked].phone; $refs.address.value = saved[picked].address; $refs.city.value = saved[picked].city; $refs.postal.value = saved[picked].postal_code }"
-                                class="w-full text-sm border border-[#dcd8cd] rounded-xl px-4 py-3 bg-[#fafaf8] focus:bg-white focus:outline-none focus:border-[#0f2255] transition-all"
-                            >
-                                <option value="">— Tulis alamat baru —</option>
-                                @foreach($addresses as $savedAddress)
-                                    <option value="{{ $savedAddress->id }}">
-                                        {{ ($savedAddress->label ?: 'Alamat').' · ' }}{{ $savedAddress->recipient_name }}, {{ $savedAddress->fullAddress() }}@if($savedAddress->is_default) (utama)@endif
-                                    </option>
-                                @endforeach
-                            </select>
-                            <p class="text-xs text-gray-400 mt-1.5">Kelola daftar alamat ini di halaman Profil Akun &rarr; Buku Alamat.</p>
-                        </div>
-                    @endif
-
-                    <div class="grid sm:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
-                                Nama Lengkap Penerima <span class="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                name="recipient_name"
-                                x-ref="recipient"
-                                value="{{ old('recipient_name', $defaultAddress?->recipient_name ?? $user->name) }}"
-                                required
-                                class="w-full text-sm border border-[#dcd8cd] rounded-xl px-4 py-3 bg-[#fafaf8] focus:bg-white focus:outline-none focus:border-[#0f2255] transition-all"
-                            >
-                            @error('recipient_name') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
-                                Nomor WhatsApp / Telepon <span class="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="tel"
-                                name="phone"
-                                x-ref="phone"
-                                value="{{ old('phone', $defaultAddress?->phone ?? $user->phone) }}"
-                                placeholder="Contoh: 081234567890"
-                                required
-                                class="w-full text-sm border border-[#dcd8cd] rounded-xl px-4 py-3 bg-[#fafaf8] focus:bg-white focus:outline-none focus:border-[#0f2255] transition-all"
-                            >
-                            @error('phone') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
-                            Alamat Lengkap Pengiriman <span class="text-red-500">*</span>
-                        </label>
-                        <textarea
-                            name="address"
-                            x-ref="address"
-                            rows="3"
-                            placeholder="Tuliskan nama jalan, nomor rumah, RT/RW, kelurahan, kecamatan, kota/kabupaten, dan kode pos"
-                            required
-                            class="w-full text-sm border border-[#dcd8cd] rounded-xl px-4 py-3 bg-[#fafaf8] focus:bg-white focus:outline-none focus:border-[#0f2255] transition-all"
-                        >{{ old('address', $defaultAddress?->address) }}</textarea>
-                        @error('address') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                    </div>
-
-                    <div class="grid sm:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
-                                Kota / Kabupaten <span class="text-gray-400 font-normal">(wajib jika alamat disimpan)</span>
-                            </label>
-                            <input
-                                type="text"
-                                name="city"
-                                x-ref="city"
-                                value="{{ old('city', $defaultAddress?->city) }}"
-                                placeholder="Contoh: Kota Administrasi Jakarta Pusat"
-                                class="w-full text-sm border border-[#dcd8cd] rounded-xl px-4 py-3 bg-[#fafaf8] focus:bg-white focus:outline-none focus:border-[#0f2255] transition-all"
-                            >
-                            @error('city') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
-                                Kode Pos <span class="text-gray-400 font-normal">(Opsional)</span>
-                            </label>
-                            <input
-                                type="text"
-                                name="postal_code"
-                                x-ref="postal"
-                                value="{{ old('postal_code', $defaultAddress?->postal_code) }}"
-                                placeholder="Contoh: 10310"
-                                class="w-full text-sm border border-[#dcd8cd] rounded-xl px-4 py-3 bg-[#fafaf8] focus:bg-white focus:outline-none focus:border-[#0f2255] transition-all"
-                            >
-                            @error('postal_code') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
-
-                    <div class="bg-[#f4f2ec] border border-[#e8e6df] rounded-xl p-4 mb-4">
-                        <label class="flex items-start gap-3 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                name="save_address"
-                                value="1"
-                                @checked(old('save_address', $addresses->isEmpty()))
-                                class="mt-0.5 rounded border-[#dcd8cd] text-[#0f2255] focus:ring-[#0f2255]"
-                            >
-                            <span class="text-xs text-gray-600">
-                                <span class="font-semibold text-gray-800">Simpan alamat ini ke buku alamat saya.</span>
-                                <span class="block text-gray-500 mt-0.5">Berikutnya cukup pilih dari daftar, tidak perlu menulis ulang.</span>
-                            </span>
-                        </label>
-                        <div class="mt-3">
-                            <input
-                                type="text"
-                                name="address_label"
-                                value="{{ old('address_label') }}"
-                                placeholder="Label alamat (opsional): Rumah, Kantor, Pondok..."
-                                maxlength="60"
-                                class="w-full text-xs border border-[#dcd8cd] rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-[#0f2255] transition-all"
-                            >
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
-                            Catatan Pengemasan / Pengiriman (Opsional)
-                        </label>
-                        <input
-                            type="text"
-                            name="note"
-                            value="{{ old('note') }}"
-                            placeholder="Contoh: Tolong bungkus ekstra rapi / Titip di pos satpam jika tidak ada orang"
-                            class="w-full text-sm border border-[#dcd8cd] rounded-xl px-4 py-3 bg-[#fafaf8] focus:bg-white focus:outline-none focus:border-[#0f2255] transition-all"
-                        >
-                    </div>
+        {{-- Tombol beli tempel di layar kecil --}}
+        <div class="fixed inset-x-0 bottom-0 z-30 border-t border-[#e6e3db] bg-white/95 px-4 py-3 backdrop-blur no-print lg:hidden">
+            <div class="mx-auto flex max-w-[1400px] items-center gap-3">
+                <div class="min-w-0 flex-1">
+                    <p class="text-[12px] font-semibold text-[#6b6f78]">Total {{ $totalQty }} eksemplar</p>
+                    <p class="font-serif-display text-[18px] font-bold text-[#0f2255]">Rp{{ number_format($subtotal, 0, ',', '.') }}</p>
                 </div>
-
-                {{-- 2. Pilihan Pembayaran --}}
-                <div class="bg-white border border-[#e8e6df] rounded-2xl p-6 md:p-8 shadow-sm">
-                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-[#f0eee6]">
-                        <span class="w-7 h-7 rounded-lg bg-[#f4f2ec] text-[#0f2255] font-serif-display font-bold text-sm flex items-center justify-center">2</span>
-                        <h2 class="font-serif-display font-bold text-lg text-[#0f2255]">Metode Pembayaran Resmi</h2>
-                    </div>
-
-                    <div class="space-y-3.5">
-                        {{-- Transfer Bank Manual --}}
-                        <label class="block border rounded-xl p-4 sm:p-5 cursor-pointer transition-all" :class="method === 'transfer' ? 'border-[#0f2255] bg-[#f8f9fc] ring-1 ring-[#0f2255]' : 'border-[#e8e6df] hover:border-gray-300'">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-3.5">
-                                    <input type="radio" name="payment_method" value="transfer" x-model="method" class="text-[#0f2255] focus:ring-0">
-                                    <div>
-                                        <p class="font-serif-display font-bold text-gray-900 text-sm sm:text-base">Transfer Bank Manual</p>
-                                        <p class="text-xs text-gray-500">BCA, Mandiri, BNI, BRI (Konfirmasi via unggah bukti transfer)</p>
-                                    </div>
-                                </div>
-                                <span class="text-[11px] bg-white border border-[#dcd8cd] font-semibold text-[#0f2255] px-2.5 py-1 rounded">
-                                    Verifikasi Admin
-                                </span>
-                            </div>
-                            <div x-show="method === 'transfer'" x-transition class="mt-4 pt-3 border-t border-[#e8e6df] text-xs text-gray-600 space-y-1">
-                                <p>Rekening Tujuan Resmi: <strong class="text-gray-900">{{ $settings['bank_name'] ?? 'BCA' }} — {{ $settings['bank_account_number'] ?? '1234567890' }}</strong> a.n. <strong class="text-gray-900">{{ $settings['bank_account_name'] ?? 'BOOKSPACE' }}</strong></p>
-                                <p class="text-[#e05c1a]">Setelah menyelesaikan checkout, Anda akan langsung diarahkan ke halaman invoice untuk mengunggah bukti pembayaran.</p>
-                            </div>
-                        </label>
-
-                        {{-- QRIS --}}
-                        <label class="block border rounded-xl p-4 sm:p-5 cursor-pointer transition-all" :class="method === 'qris' ? 'border-[#0f2255] bg-[#f8f9fc] ring-1 ring-[#0f2255]' : 'border-[#e8e6df] hover:border-gray-300'">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-3.5">
-                                    <input type="radio" name="payment_method" value="qris" x-model="method" class="text-[#0f2255] focus:ring-0">
-                                    <div>
-                                        <p class="font-serif-display font-bold text-gray-900 text-sm sm:text-base">QRIS (Semua E-Wallet &amp; Mobile Banking)</p>
-                                        <p class="text-xs text-gray-500">GoPay, OVO, Dana, ShopeePay, BCA Mobile, Livin', BRImo</p>
-                                    </div>
-                                </div>
-                                <span class="text-[11px] bg-blue-50 border border-blue-200 font-semibold text-blue-700 px-2.5 py-1 rounded">
-                                    Scan QR Cepat
-                                </span>
-                            </div>
-                            <div x-show="method === 'qris'" x-transition class="mt-4 pt-3 border-t border-[#e8e6df] text-xs text-gray-600">
-                                <p class="text-[#e05c1a]">Kode QRIS resmi toko akan tampil di langkah selanjutnya untuk Anda pindai dan unggah tangkapan layarnya.</p>
-                            </div>
-                        </label>
-
-                        {{-- COD --}}
-                        <label class="block border rounded-xl p-4 sm:p-5 cursor-pointer transition-all" :class="method === 'cod' ? 'border-[#0f2255] bg-[#f8f9fc] ring-1 ring-[#0f2255]' : 'border-[#e8e6df] hover:border-gray-300'">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-3.5">
-                                    <input type="radio" name="payment_method" value="cod" x-model="method" class="text-[#0f2255] focus:ring-0">
-                                    <div>
-                                        <p class="font-serif-display font-bold text-gray-900 text-sm sm:text-base">Bayar di Tempat (Cash on Delivery / COD)</p>
-                                        <p class="text-xs text-gray-500">Bayar tunai kepada kurir saat buku tiba di alamat Anda</p>
-                                    </div>
-                                </div>
-                                <span class="text-[11px] bg-emerald-50 border border-emerald-200 font-semibold text-emerald-700 px-2.5 py-1 rounded">
-                                    Tunai Kurir
-                                </span>
-                            </div>
-                            <div x-show="method === 'cod'" x-transition class="mt-4 pt-3 border-t border-[#e8e6df] text-xs text-gray-600">
-                                <p class="text-gray-700">Pastikan nomor telepon WhatsApp aktif untuk konfirmasi kelayakan kirim dari admin BOOKSPACE.</p>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-
+                <button type="submit" class="btn-primary shrink-0 !px-5 !py-2.5 text-[13px]">Konfirmasi Pesanan</button>
             </div>
-
-            {{-- ── RIGHT: ORDER SUMMARY (4 cols) ──────────────── --}}
-            <div class="lg:col-span-4">
-                <div class="bg-white border border-[#e8e6df] rounded-2xl p-6 sticky top-28 shadow-sm">
-                    <h3 class="font-serif-display font-bold text-lg text-[#0f2255] mb-4 pb-3 border-b border-[#f0eee6]">
-                        Ringkasan Pesanan
-                    </h3>
-
-                    {{-- Items mini list --}}
-                    <div class="max-h-56 overflow-y-auto space-y-3 mb-4 pr-1">
-                        @foreach($cart->items as $item)
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-14 bg-[#f4f2ec] rounded overflow-hidden shrink-0 border border-[#e8e6df]">
-                                <img src="{{ $item->book->coverUrl() }}" alt="{{ $item->book->title }}" class="w-full h-full object-cover" onerror="this.src='{{ asset('images/cover-placeholder.svg') }}'">
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-xs font-serif-display font-bold text-gray-800 truncate">{{ $item->book->title }}</p>
-                                <p class="text-[11px] text-gray-400 font-mono">{{ $item->quantity }} x Rp{{ number_format($item->book->finalPrice(), 0, ',', '.') }}</p>
-                            </div>
-                            <span class="text-xs font-bold text-gray-900 shrink-0 font-mono">Rp{{ number_format($item->subtotal(), 0, ',', '.') }}</span>
-                        </div>
-                        @endforeach
-                    </div>
-
-                    {{-- Cost details --}}
-                    <div class="space-y-2.5 pt-4 border-t border-[#f0eee6] text-xs">
-                        <div class="flex justify-between text-gray-600">
-                            <span>Subtotal Buku ({{ $cart->items->sum('quantity') }} eks)</span>
-                            <span class="font-semibold text-gray-900 font-mono">Rp{{ number_format($subtotal, 0, ',', '.') }}</span>
-                        </div>
-                        <div class="flex justify-between text-gray-600">
-                            <span>Ongkos Kirim Standar</span>
-                            <span class="text-emerald-700 font-bold">Gratis (Subsidi Toko)</span>
-                        </div>
-                    </div>
-
-                    <div class="mt-4 pt-4 border-t border-[#f0eee6] flex items-baseline justify-between mb-6">
-                        <span class="font-serif-display font-bold text-sm text-gray-900">Total Akhir</span>
-                        <span class="font-serif-display font-bold text-2xl text-[#e05c1a]">
-                            Rp{{ number_format($subtotal, 0, ',', '.') }}
-                        </span>
-                    </div>
-
-                    <button type="submit" class="w-full bg-[#0f2255] hover:bg-[#1a3380] text-white font-semibold py-3.5 px-4 rounded-xl transition-all shadow-md text-sm tracking-wide block text-center">
-                        Konfirmasi &amp; Lanjut Pembayaran
-                    </button>
-
-                    <div class="mt-4 text-center">
-                        <a href="{{ route('cart.index') }}" class="text-xs text-gray-400 hover:text-[#0f2255] transition-colors">
-                            &larr; Periksa Kembali Keranjang
-                        </a>
-                    </div>
-                </div>
-            </div>
-
         </div>
     </form>
 </div>
 @endsection
-
