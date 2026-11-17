@@ -42,6 +42,7 @@ class DatabaseSeeder extends Seeder
             BookCoverGeneratorSeeder::class,
             OrderSeeder::class,
             ReviewSeeder::class,
+            AddressSeeder::class,
         ]);
 
         // Seeder ada yang menulis massal tanpa event model, jadi segarkan cache yang dibaca tampilan.

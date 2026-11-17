@@ -34,7 +34,18 @@
         </p>
     </div>
 
-    <form method="POST" action="{{ route('checkout.store') }}" x-data="{ method: 'transfer' }">
+    @php
+        $savedAddresses = $addresses->mapWithKeys(fn ($a) => [
+            (string) $a->id => [
+                'recipient_name' => $a->recipient_name,
+                'phone' => $a->phone,
+                'address' => $a->address,
+                'city' => $a->city,
+                'postal_code' => (string) $a->postal_code,
+            ],
+        ]);
+    @endphp
+    <form method="POST" action="{{ route('checkout.store') }}" x-data="{ method: 'transfer', saved: {{ \Illuminate\Support\Js::from($savedAddresses) }}, picked: '' }">
         @csrf
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
@@ -48,6 +59,27 @@
                         <h2 class="font-serif-display font-bold text-lg text-[#0f2255]">Tujuan Pengiriman Paket</h2>
                     </div>
 
+                    @if($addresses->isNotEmpty())
+                        <div class="mb-5">
+                            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                                Pakai Alamat Tersimpan
+                            </label>
+                            <select
+                                x-model="picked"
+                                @change="if (saved[picked]) { $refs.recipient.value = saved[picked].recipient_name; $refs.phone.value = saved[picked].phone; $refs.address.value = saved[picked].address; $refs.city.value = saved[picked].city; $refs.postal.value = saved[picked].postal_code }"
+                                class="w-full text-sm border border-[#dcd8cd] rounded-xl px-4 py-3 bg-[#fafaf8] focus:bg-white focus:outline-none focus:border-[#0f2255] transition-all"
+                            >
+                                <option value="">— Tulis alamat baru —</option>
+                                @foreach($addresses as $savedAddress)
+                                    <option value="{{ $savedAddress->id }}">
+                                        {{ ($savedAddress->label ?: 'Alamat').' · ' }}{{ $savedAddress->recipient_name }}, {{ $savedAddress->fullAddress() }}@if($savedAddress->is_default) (utama)@endif
+                                    </option>
+                                @endforeach
+                            </select>
+                            <p class="text-xs text-gray-400 mt-1.5">Kelola daftar alamat ini di halaman Profil Akun &rarr; Buku Alamat.</p>
+                        </div>
+                    @endif
+
                     <div class="grid sm:grid-cols-2 gap-4 mb-4">
                         <div>
                             <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
@@ -56,7 +88,8 @@
                             <input
                                 type="text"
                                 name="recipient_name"
-                                value="{{ old('recipient_name', $user->name) }}"
+                                x-ref="recipient"
+                                value="{{ old('recipient_name', $defaultAddress?->recipient_name ?? $user->name) }}"
                                 required
                                 class="w-full text-sm border border-[#dcd8cd] rounded-xl px-4 py-3 bg-[#fafaf8] focus:bg-white focus:outline-none focus:border-[#0f2255] transition-all"
                             >
@@ -70,7 +103,8 @@
                             <input
                                 type="tel"
                                 name="phone"
-                                value="{{ old('phone', $user->phone) }}"
+                                x-ref="phone"
+                                value="{{ old('phone', $defaultAddress?->phone ?? $user->phone) }}"
                                 placeholder="Contoh: 081234567890"
                                 required
                                 class="w-full text-sm border border-[#dcd8cd] rounded-xl px-4 py-3 bg-[#fafaf8] focus:bg-white focus:outline-none focus:border-[#0f2255] transition-all"
@@ -85,12 +119,71 @@
                         </label>
                         <textarea
                             name="address"
+                            x-ref="address"
                             rows="3"
                             placeholder="Tuliskan nama jalan, nomor rumah, RT/RW, kelurahan, kecamatan, kota/kabupaten, dan kode pos"
                             required
                             class="w-full text-sm border border-[#dcd8cd] rounded-xl px-4 py-3 bg-[#fafaf8] focus:bg-white focus:outline-none focus:border-[#0f2255] transition-all"
-                        >{{ old('address') }}</textarea>
+                        >{{ old('address', $defaultAddress?->address) }}</textarea>
                         @error('address') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    <div class="grid sm:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                                Kota / Kabupaten <span class="text-gray-400 font-normal">(wajib jika alamat disimpan)</span>
+                            </label>
+                            <input
+                                type="text"
+                                name="city"
+                                x-ref="city"
+                                value="{{ old('city', $defaultAddress?->city) }}"
+                                placeholder="Contoh: Kota Administrasi Jakarta Pusat"
+                                class="w-full text-sm border border-[#dcd8cd] rounded-xl px-4 py-3 bg-[#fafaf8] focus:bg-white focus:outline-none focus:border-[#0f2255] transition-all"
+                            >
+                            @error('city') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                                Kode Pos <span class="text-gray-400 font-normal">(Opsional)</span>
+                            </label>
+                            <input
+                                type="text"
+                                name="postal_code"
+                                x-ref="postal"
+                                value="{{ old('postal_code', $defaultAddress?->postal_code) }}"
+                                placeholder="Contoh: 10310"
+                                class="w-full text-sm border border-[#dcd8cd] rounded-xl px-4 py-3 bg-[#fafaf8] focus:bg-white focus:outline-none focus:border-[#0f2255] transition-all"
+                            >
+                            @error('postal_code') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+
+                    <div class="bg-[#f4f2ec] border border-[#e8e6df] rounded-xl p-4 mb-4">
+                        <label class="flex items-start gap-3 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                name="save_address"
+                                value="1"
+                                @checked(old('save_address', $addresses->isEmpty()))
+                                class="mt-0.5 rounded border-[#dcd8cd] text-[#0f2255] focus:ring-[#0f2255]"
+                            >
+                            <span class="text-xs text-gray-600">
+                                <span class="font-semibold text-gray-800">Simpan alamat ini ke buku alamat saya.</span>
+                                <span class="block text-gray-500 mt-0.5">Berikutnya cukup pilih dari daftar, tidak perlu menulis ulang.</span>
+                            </span>
+                        </label>
+                        <div class="mt-3">
+                            <input
+                                type="text"
+                                name="address_label"
+                                value="{{ old('address_label') }}"
+                                placeholder="Label alamat (opsional): Rumah, Kantor, Pondok..."
+                                maxlength="60"
+                                class="w-full text-xs border border-[#dcd8cd] rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-[#0f2255] transition-all"
+                            >
+                        </div>
                     </div>
 
                     <div>

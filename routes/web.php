@@ -17,6 +17,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PaymentProofController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\User\AddressController as UserAddressController;
 use App\Http\Controllers\User\HelpController;
 use App\Http\Controllers\User\OrderController;
 use App\Http\Controllers\User\ProfileController as UserProfileController;
@@ -75,6 +76,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/pesanan', [OrderController::class, 'index'])->name('orders');
         Route::get('/pesanan/{order}', [OrderController::class, 'show'])->name('orders.show');
         Route::patch('/pesanan/{order}/terima', [OrderController::class, 'receive'])->name('orders.receive');
+        Route::post('/alamat', [UserAddressController::class, 'store'])->name('addresses.store');
+        Route::put('/alamat/{address}', [UserAddressController::class, 'update'])->name('addresses.update');
+        Route::patch('/alamat/{address}/utama', [UserAddressController::class, 'makeDefault'])->name('addresses.default');
+        Route::delete('/alamat/{address}', [UserAddressController::class, 'destroy'])->name('addresses.destroy');
     });
 
     // Help / Live Chat

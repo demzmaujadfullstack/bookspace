@@ -39,7 +39,9 @@ class ProfileController extends Controller
         /** @var User $user */
         $user = auth()->user();
 
-        return view('user.profile', compact('user'));
+        $addresses = $user->addresses()->orderByDesc('is_default')->orderBy('id')->get();
+
+        return view('user.profile', compact('user', 'addresses'));
     }
 
     public function update(Request $request): RedirectResponse

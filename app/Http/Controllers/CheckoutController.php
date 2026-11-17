@@ -35,8 +35,10 @@ class CheckoutController extends Controller
 
         $settings = Setting::values();
         $subtotal = $cart->items->sum(fn ($i) => $i->subtotal());
+        $addresses = $user->addresses()->orderByDesc('is_default')->orderBy('id')->get();
+        $defaultAddress = $addresses->first();
 
-        return view('checkout.index', compact('cart', 'subtotal', 'settings', 'user'));
+        return view('checkout.index', compact('cart', 'subtotal', 'settings', 'user', 'addresses', 'defaultAddress'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -55,14 +57,21 @@ class CheckoutController extends Controller
             'address' => ['required', 'string', 'max:500'],
             'note' => ['nullable', 'string', 'max:500'],
             'payment_method' => ['required', 'in:cod,transfer,qris'],
+            'city' => [$request->boolean('save_address') ? 'required' : 'nullable', 'string', 'max:80'],
+            'postal_code' => ['nullable', 'string', 'max:10'],
+            'save_address' => ['nullable', 'boolean'],
+            'address_label' => ['nullable', 'string', 'max:60'],
         ], [
             'recipient_name.required' => 'Nama penerima wajib diisi.',
             'phone.required' => 'Nomor WhatsApp / telepon penerima wajib diisi.',
             'address.required' => 'Alamat pengiriman lengkap wajib diisi.',
             'payment_method.required' => 'Pilih metode pembayaran.',
+            'city.required' => 'Isi kota/kabupaten agar alamat ini bisa disimpan ke buku alamat Anda.',
         ]);
 
-        return DB::transaction(function () use ($user, $cart, $validated) {
+        $saveAddress = $request->boolean('save_address');
+
+        return DB::transaction(function () use ($user, $cart, $validated, $saveAddress) {
             // Re-validate stock
             foreach ($cart->items as $item) {
                 if ($item->book->stock < $item->quantity) {
@@ -116,6 +125,10 @@ class CheckoutController extends Controller
                 'account_number' => $settings['bank_account_number'] ?? '-',
                 'account_holder' => $settings['bank_account_name'] ?? 'BOOKSPACE',
             ]);
+
+            if ($saveAddress) {
+                $this->rememberAddress($user, $validated);
+            }
 
             // Clear the cart
             $cart->items()->delete();
@@ -197,6 +210,33 @@ class CheckoutController extends Controller
         }
 
         return redirect()->route('user.orders')->with('success', "Pesanan #{$order->code} berhasil dibatalkan.");
+    }
+
+    /**
+     * Simpan alamat checkout ke buku alamat, atau perbarui entri yang teksnya sama.
+     *
+     * @param  array<string, mixed>  $validated
+     */
+    private function rememberAddress(User $user, array $validated): void
+    {
+        $attributes = [
+            'label' => $validated['address_label'] ?? null,
+            'recipient_name' => $validated['recipient_name'],
+            'phone' => $validated['phone'],
+            'address' => $validated['address'],
+            'city' => $validated['city'],
+            'postal_code' => $validated['postal_code'] ?? null,
+        ];
+
+        $existing = $user->addresses()->where('address', $validated['address'])->first();
+
+        if ($existing) {
+            $existing->update($attributes);
+
+            return;
+        }
+
+        $user->addresses()->create($attributes + ['is_default' => $user->addresses()->count() === 0]);
     }
 
     private function authorizeOrder(Order $order): void

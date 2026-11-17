@@ -10,7 +10,7 @@ BOOKSPACE adalah aplikasi e-commerce buku lengkap dengan dua sisi: **etalase pem
 
 📸 **Semua screenshot:** [github.com/demzmaujadfullstack/bookspace/tree/main/preview](https://github.com/demzmaujadfullstack/bookspace/tree/main/preview)
 
-21 tangkapan layar ini diambil langsung dari aplikasi yang berjalan (bukan mockup/desain ulang). Klik gambar mana pun untuk membuka ukuran penuh, atau buka [folder `preview/`](https://github.com/demzmaujadfullstack/bookspace/tree/main/preview) untuk melihat semuanya sekaligus.
+22 tangkapan layar ini diambil langsung dari aplikasi yang berjalan (bukan mockup/desain ulang). Klik gambar mana pun untuk membuka ukuran penuh, atau buka [folder `preview/`](https://github.com/demzmaujadfullstack/bookspace/tree/main/preview) untuk melihat semuanya sekaligus.
 
 ### Etalase Pembaca
 
@@ -24,10 +24,10 @@ BOOKSPACE adalah aplikasi e-commerce buku lengkap dengan dua sisi: **etalase pem
 | [![Detail Buku](./preview/03-detail-buku.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/03-detail-buku.png?raw=true) | [![Keranjang](./preview/04-keranjang.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/04-keranjang.png?raw=true) |
 | Informasi bibliografi lengkap, harga coret, stok real-time, dan ulasan pembaca. | Ubah jumlah barang, subtotal, dan estimasi ongkir. |
 
-| Checkout | Daftar Favorit |
-| --- | --- |
-| [![Checkout](./preview/05-checkout.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/05-checkout.png?raw=true) | [![Favorit](./preview/08-favorit.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/08-favorit.png?raw=true) |
-| Alamat pengiriman, metode pembayaran, dan unggah bukti transfer. | Simpan buku impian lewat tombol favorit di setiap halaman buku. |
+| Checkout | Buku Alamat | Daftar Favorit |
+| --- | --- | --- |
+| [![Checkout](./preview/05-checkout.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/05-checkout.png?raw=true) | [![Buku Alamat](./preview/22-buku-alamat.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/22-buku-alamat.png?raw=true) | [![Favorit](./preview/08-favorit.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/08-favorit.png?raw=true) |
+| Pilih alamat tersimpan, lengkapi pembayaran, dan unggah bukti transfer. | Simpan alamat rumah/kantor dan tentukan alamat utama. | Simpan buku impian lewat tombol favorit di setiap halaman buku. |
 
 | Dashboard Pembaca | Pesanan Saya |
 | --- | --- |
@@ -37,7 +37,7 @@ BOOKSPACE adalah aplikasi e-commerce buku lengkap dengan dua sisi: **etalase pem
 | Bantuan & Live Chat | Profil Akun |
 | --- | --- |
 | [![Bantuan](./preview/14-chat-bantuan.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/14-chat-bantuan.png?raw=true) | [![Profil](./preview/15-profil-akun.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/15-profil-akun.png?raw=true) |
-| FAQ dan ngobrol langsung dengan tim admin. | Perbarui data diri dan alamat pengiriman. |
+| FAQ dan ngobrol langsung dengan tim admin. | Perbarui data diri dan kelola buku alamat pengiriman. |
 
 ### Panel Admin
 
@@ -77,7 +77,8 @@ BOOKSPACE adalah aplikasi e-commerce buku lengkap dengan dua sisi: **etalase pem
 ### Untuk Pembaca
 - **Katalog & pencarian** — filter kategori genre, rentang harga, buku diskon, urutkan berdasarkan terbaru/terlaris/harga, plus pencarian judul, penulis, atau ISBN.
 - **Detail buku** — informasi bibliografi (ISBN, penerbit, tahun, jumlah halaman), harga coret beserta persen diskon, status stok, dan ulasan pembaca yang dapat diubah atau dihapus oleh penulisnya.
-- **Keranjang & checkout** — ubah jumlah item, pilih metode pembayaran, isi alamat pengiriman, lalu unggah bukti transfer.
+- **Keranjang & checkout** — ubah jumlah item, pilih alamat tersimpan atau tulis baru, centang "simpan alamat ini", pilih metode pembayaran, lalu unggah bukti transfer.
+- **Buku alamat pengiriman** — simpan beberapa alamat (rumah, kantor, titipan), tandai satu sebagai utama, dan pakai lagi saat checkout tanpa menulis ulang.
 - **Pelacakan pesanan** — status pembayaran dan pengiriman, nomor resi dari admin, tombol konfirmasi "Pesanan Sudah Diterima", serta riwayat pesanan lengkap dengan nomor faktur.
 - **Daftar favorit** — simpan buku untuk dibeli nanti.
 - **Bantuan & live chat** — FAQ yang bisa dibuka-tutup dan obrolan langsung dengan admin.
@@ -184,6 +185,17 @@ erDiagram
         enum status "menunggu | menunggu_verifikasi | diterima | ditolak"
         string proof_image "disimpan di disk local (non-public)"
     }
+
+    ADDRESSES {
+        bigint id PK
+        bigint user_id FK
+        string label "Rumah | Kantor | Pondok"
+        string recipient_name
+        text address
+        string city
+        string postal_code
+        boolean is_default "hanya satu per pengguna"
+    }
 ```
 
 ---
@@ -266,15 +278,15 @@ app/
 ├── Models/             # 16 model (Book, Order, Payment, StockMovement, ...)
 database/
 ├── migrations/         # 21 migrasi
-└── seeders/            # data contoh: 20 buku, 10 kategori, 47 pesanan, 5 banner, ±21 ulasan
+└── seeders/            # data contoh: 20 buku, 10 kategori, 47 pesanan, 5 banner, ±21 ulasan, 3 alamat
 resources/views/
 ├── admin/              # tampilan panel admin
 ├── books/ cart/ checkout/ user/  # alur belanja pembaca
 ├── pages/              # tentang, kebijakan privasi, syarat & ketentuan
 └── layouts/ components/ # tata letak & komponen Blade (book-card, review-form, breadcrumbs, ...)
 preview/                # tangkapan layar aplikasi
-routes/web.php          # 98 route
-tests/                  # 16 file pengujian unit & feature
+routes/web.php          # 102 route
+tests/                  # 17 file pengujian unit & feature
 ```
 
 ---
@@ -282,12 +294,12 @@ tests/                  # 16 file pengujian unit & feature
 ## ✅ Pengujian
 
 ```bash
-php artisan test          # 53 tes, 158 assertion (sqlite in-memory)
+php artisan test          # 65 tes, 194 assertion (sqlite in-memory)
 vendor/bin/pint           # perbaiki gaya kode
 vendor/bin/pint --test    # periksa tanpa mengubah
 ```
 
-Cakupan tes yang paling penting: `OrderLifecycleTest` (keranjang → checkout → bukti transfer → verifikasi admin → resi → konfirmasi terima), `StockAndTransactionTest` (stok hanya berubah saat pembayaran disetujui), `ShippingTrackingTest` (resi wajib saat dikirim + hak konfirmasi pembeli), `WishlistAndReviewTest` (ubah/hapus ulasan dan paginasi daftar), `AdminAccessTest` (pemisahan hak admin/pembaca), `StaticPageTest`, dan rangkaian `Auth/*` bawaan Breeze.
+Cakupan tes yang paling penting: `OrderLifecycleTest` (keranjang → checkout → bukti transfer → verifikasi admin → resi → konfirmasi terima), `StockAndTransactionTest` (stok hanya berubah saat pembayaran disetujui), `ShippingTrackingTest` (resi wajib saat dikirim + hak konfirmasi pembeli), `UserAddressTest` (buku alamat, alamat utama, dan prefill checkout), `WishlistAndReviewTest` (ubah/hapus ulasan dan paginasi daftar), `AdminAccessTest` (pemisahan hak admin/pembaca), `StaticPageTest`, dan rangkaian `Auth/*` bawaan Breeze.
 
 ---
 
