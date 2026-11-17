@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Book;
+use App\Models\Category;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -56,11 +58,49 @@ class MiddlewareAccessTest extends TestCase
     {
         $admin = User::factory()->create(['role' => 'admin']);
 
-        $this->actingAs($admin)->get(route('user.dashboard'))->assertOk();
-
         foreach ($this->adminRoutes as $name => $uri) {
             $this->actingAs($admin)->get(route($name))->assertOk();
         }
+    }
+
+    public function test_admin_can_still_manage_their_own_account(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)->get(route('user.profile.edit'))->assertOk();
+        $this->actingAs($admin)->get(route('help.index'))->assertOk();
+    }
+
+    public function test_admin_is_blocked_from_the_buyer_area(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $buyer = User::factory()->create(['role' => 'user']);
+
+        $this->actingAs($admin)->get(route('cart.index'))->assertForbidden();
+        $this->actingAs($admin)->get(route('checkout.index'))->assertForbidden();
+        $this->actingAs($admin)->get(route('wishlist.index'))->assertForbidden();
+        $this->actingAs($admin)->get(route('user.dashboard'))->assertForbidden();
+        $this->actingAs($admin)->get(route('user.orders'))->assertForbidden();
+
+        $this->actingAs($admin)->post(route('books.cart.add', $this->book()))->assertForbidden();
+
+        $this->actingAs($buyer)->get(route('cart.index'))->assertOk();
+    }
+
+    private function book(): Book
+    {
+        $category = Category::create(['name' => 'Novel', 'slug' => 'novel']);
+
+        return Book::create([
+            'category_id' => $category->id,
+            'title' => 'Buku Uji Akses',
+            'slug' => 'buku-uji-akses',
+            'author' => 'Penulis',
+            'price' => 50000,
+            'stock' => 5,
+            'year' => 2024,
+            'description' => 'Buku untuk menguji pemisahan hak akses.',
+        ]);
     }
 
     public function test_role_cannot_be_filled_from_request_body(): void

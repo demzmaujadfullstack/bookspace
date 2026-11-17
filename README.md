@@ -96,6 +96,9 @@ BOOKSPACE adalah aplikasi e-commerce buku lengkap dengan dua sisi: **etalase pem
 - **Pengaturan sistem** — nama toko, ambang gratis ongkir, dan teks pengumuman.
 - **Pusat bantuan** — menjawab chat pembaca, dengan badge pesan baru dan konfirmasi sebelum menutup percakapan.
 - **Moderasi ulasan** — menghapus ulasan yang tidak pantas dari halaman detail buku.
+- **Pemisahan hak akses** — middleware `admin` menjaga seluruh `/admin/*`, sementara middleware `buyer` menutup area belanja (`/cart`, `/checkout`, `/favorit`, `/akun/pesanan`, tambah keranjang) untuk akun admin. Admin tetap bisa membuka etalase dan langsung mengedit buku yang sedang dilihatnya.
+
+Penolakan akses dan halaman hilang ditampilkan rapi lewat `resources/views/errors/403.blade.php` dan `404.blade.php`: ada penjelasan penyebabnya, tombol kembali ke beranda/katalog, tautan ke dasbor admin, dan kolom pencarian pada halaman 404.
 
 ---
 

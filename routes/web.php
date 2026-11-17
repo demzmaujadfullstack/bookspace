@@ -42,13 +42,12 @@ Route::get('/dashboard', function () {
         : redirect()->route('user.dashboard');
 })->middleware('auth')->name('dashboard');
 
-// ─── Authenticated user ───────────────────────────────────────────────────────
-Route::middleware(['auth'])->group(function () {
+// ─── Area pembeli (khusus akun role 'user') ─────────────────────────────────
+Route::middleware(['auth', 'buyer'])->group(function () {
     // Add to cart & Review & Wishlist
     Route::post('/books/{book}/cart', [BookController::class, 'addToCart'])->name('books.cart.add');
     Route::post('/books/{book}/reviews', [ReviewController::class, 'store'])->name('books.reviews.store');
     Route::put('/books/{book}/reviews/{review}', [ReviewController::class, 'update'])->name('books.reviews.update');
-    Route::delete('/books/{book}/reviews/{review}', [ReviewController::class, 'destroy'])->name('books.reviews.destroy');
     Route::get('/favorit', [WishlistController::class, 'index'])->name('wishlist.index');
     Route::post('/favorit/{book}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
 
@@ -65,18 +64,28 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/checkout/{order}/success', [CheckoutController::class, 'success'])->name('checkout.success');
     Route::post('/checkout/{order}/cancel', [CheckoutController::class, 'cancel'])->name('checkout.cancel');
 
-    // Payment proof (private file, owner or admin only)
-    Route::get('/bukti-pembayaran/{payment}', [PaymentProofController::class, 'show'])->name('payment.proof');
-
-    // User area
+    // Pesanan saya
     Route::prefix('akun')->name('user.')->group(function () {
         Route::get('/', [UserProfileController::class, 'dashboard'])->name('dashboard');
-        Route::get('/profil', [UserProfileController::class, 'edit'])->name('profile.edit');
-        Route::patch('/profil', [UserProfileController::class, 'update'])->name('profile.update');
-        Route::patch('/sandi', [UserProfileController::class, 'updatePassword'])->name('profile.password');
         Route::get('/pesanan', [OrderController::class, 'index'])->name('orders');
         Route::get('/pesanan/{order}', [OrderController::class, 'show'])->name('orders.show');
         Route::patch('/pesanan/{order}/terima', [OrderController::class, 'receive'])->name('orders.receive');
+    });
+});
+
+// ─── Manajemen akun & pusat bantuan (admin boleh masuk) ──────────────────────
+Route::middleware(['auth'])->group(function () {
+    // Payment proof (private file, owner or admin only)
+    Route::get('/bukti-pembayaran/{payment}', [PaymentProofController::class, 'show'])->name('payment.proof');
+
+    // Moderasi ulasan: pemilik ulasan atau admin (dijaga di controller)
+    Route::delete('/books/{book}/reviews/{review}', [ReviewController::class, 'destroy'])->name('books.reviews.destroy');
+
+    // User area
+    Route::prefix('akun')->name('user.')->group(function () {
+        Route::get('/profil', [UserProfileController::class, 'edit'])->name('profile.edit');
+        Route::patch('/profil', [UserProfileController::class, 'update'])->name('profile.update');
+        Route::patch('/sandi', [UserProfileController::class, 'updatePassword'])->name('profile.password');
         Route::post('/alamat', [UserAddressController::class, 'store'])->name('addresses.store');
         Route::put('/alamat/{address}', [UserAddressController::class, 'update'])->name('addresses.update');
         Route::patch('/alamat/{address}/utama', [UserAddressController::class, 'makeDefault'])->name('addresses.default');

@@ -222,11 +222,15 @@
                     <a href="{{ route('books.show', $spotlightBook->slug) }}" class="btn-ghost inline-flex h-11 items-center rounded-lg px-5 text-sm font-semibold">Detail Buku</a>
                     @if($spotlightBook->stock > 0)
                         @auth
+                            @if(auth()->user()->isAdmin())
+                                <a href="{{ route('admin.books.edit', $spotlightBook) }}" class="btn-outline inline-flex h-11 items-center rounded-lg px-6 text-sm font-semibold">Ubah Data Buku</a>
+                            @else
                             <form method="POST" action="{{ route('books.cart.add', $spotlightBook) }}">
                                 @csrf
                                 <input type="hidden" name="quantity" value="1">
                                 <button type="submit" class="btn-orange inline-flex h-11 items-center rounded-lg px-6 text-sm font-semibold">Tambah ke Keranjang</button>
                             </form>
+                            @endif
                         @else
                             <a href="{{ route('login') }}" class="btn-orange inline-flex h-11 items-center rounded-lg px-6 text-sm font-semibold">Masuk untuk Membeli</a>
                         @endauth

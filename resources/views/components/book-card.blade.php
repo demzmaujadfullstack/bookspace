@@ -29,6 +29,7 @@
         </div>
 
         @auth
+            @unless(auth()->user()->isAdmin())
             <form method="POST" action="{{ route('wishlist.toggle', $book) }}" class="absolute left-2 top-2 z-20">
                 @csrf
                 <button type="submit"
@@ -40,6 +41,7 @@
                     </svg>
                 </button>
             </form>
+            @endunless
         @endauth
     </div>
 
@@ -88,6 +90,13 @@
 
             @if($book->stock > 0)
                 @auth
+                    @if(auth()->user()->isAdmin())
+                        <a href="{{ route('admin.books.edit', $book) }}"
+                            class="mt-2 flex h-8 w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-[#0f2255]/25 bg-white text-[11px] font-semibold text-[#0f2255] transition-colors hover:bg-[#0f2255] hover:text-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            <span>Ubah Data Buku</span>
+                        </a>
+                    @else
                     <form method="POST" action="{{ route('books.cart.add', $book) }}" class="mt-2">
                         @csrf
                         <input type="hidden" name="quantity" value="1">
@@ -97,6 +106,7 @@
                             <span>Tambah ke Keranjang</span>
                         </button>
                     </form>
+                    @endif
                 @else
                     <a href="{{ route('login') }}"
                         class="mt-2 flex h-8 w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-[#0f2255] text-[11px] font-semibold text-white transition-colors hover:bg-[#e05c1a]">

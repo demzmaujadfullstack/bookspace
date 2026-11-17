@@ -3,6 +3,7 @@
     $navCartCount = auth()->check() ? (int) (auth()->user()->cart?->items()->sum('quantity') ?? 0) : 0;
     $navWishlistCount = auth()->check() ? count(auth()->user()->wishlistedBookIds()) : 0;
     $navFreeShip = (int) \App\Models\Setting::value('free_shipping_threshold', 200000);
+    $navIsAdmin = auth()->user()?->isAdmin() ?? false;
 @endphp
 
 <header x-data="{ drawer: false }" class="sticky top-0 z-40 bg-white no-print"
@@ -56,6 +57,7 @@
 
             <div class="ml-auto flex shrink-0 items-center gap-1 md:ml-0">
                 @auth
+                    @unless($navIsAdmin)
                     <a href="{{ route('wishlist.index') }}" class="relative hidden h-10 items-center gap-2 rounded-lg px-3 text-[13px] font-semibold text-[#3f4451] transition-colors hover:bg-[#f4f2ec] hover:text-[#0f2255] sm:flex" title="Buku favorit">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
@@ -65,8 +67,10 @@
                             <span class="grid h-5 min-w-[20px] place-items-center rounded-full bg-[#e05c1a] px-1 text-[11px] font-bold text-white">{{ $navWishlistCount > 99 ? '99+' : $navWishlistCount }}</span>
                         @endif
                     </a>
+                    @endunless
                 @endauth
 
+                @unless($navIsAdmin)
                 <a href="{{ route('cart.index') }}" class="relative flex h-10 items-center gap-2 rounded-lg px-3 text-[13px] font-semibold text-[#3f4451] transition-colors hover:bg-[#f4f2ec] hover:text-[#0f2255]" title="Keranjang">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
@@ -76,6 +80,7 @@
                         <span class="grid h-5 min-w-[20px] place-items-center rounded-full bg-[#e05c1a] px-1 text-[11px] font-bold text-white">{{ $navCartCount > 99 ? '99+' : $navCartCount }}</span>
                     @endif
                 </a>
+                @endunless
 
                 @auth
                     <div x-data="{ open: false }" class="relative">
@@ -96,10 +101,12 @@
                             @if(auth()->user()->isAdmin())
                                 <a href="{{ route('admin.dashboard') }}" class="border-b border-[#f0eee6] px-4 py-2.5 text-[13px] font-semibold text-[#e05c1a] hover:bg-[#faf5ee]">Dasbor Admin</a>
                             @endif
-                            <a href="{{ route('user.dashboard') }}" class="block px-4 py-2.5 text-[13px] text-[#3f4451] hover:bg-[#fafaf8]">Ringkasan Akun</a>
-                            <a href="{{ route('user.orders') }}" class="block px-4 py-2.5 text-[13px] text-[#3f4451] hover:bg-[#fafaf8]">Pesanan Saya</a>
-                            <a href="{{ route('wishlist.index') }}" class="block px-4 py-2.5 text-[13px] text-[#3f4451] hover:bg-[#fafaf8]">Buku Favorit</a>
-                            <a href="{{ route('user.profile.edit') }}" class="block px-4 py-2.5 text-[13px] text-[#3f4451] hover:bg-[#fafaf8]">Profil &amp; Alamat</a>
+                            @unless($navIsAdmin)
+                                <a href="{{ route('user.dashboard') }}" class="block px-4 py-2.5 text-[13px] text-[#3f4451] hover:bg-[#fafaf8]">Ringkasan Akun</a>
+                                <a href="{{ route('user.orders') }}" class="block px-4 py-2.5 text-[13px] text-[#3f4451] hover:bg-[#fafaf8]">Pesanan Saya</a>
+                                <a href="{{ route('wishlist.index') }}" class="block px-4 py-2.5 text-[13px] text-[#3f4451] hover:bg-[#fafaf8]">Buku Favorit</a>
+                            @endunless
+                            <a href="{{ route('user.profile.edit') }}" class="block px-4 py-2.5 text-[13px] text-[#3f4451] hover:bg-[#fafaf8]">{{ $navIsAdmin ? 'Profil & Buku Alamat' : 'Profil &amp; Alamat' }}</a>
                             <form method="POST" action="{{ route('logout') }}" class="border-t border-[#f0eee6]">
                                 @csrf
                                 <button type="submit" class="w-full px-4 py-2.5 text-left text-[13px] font-semibold text-[#b42318] hover:bg-[#fdf2f2]">Keluar</button>
@@ -179,7 +186,11 @@
 
             <div class="ml-auto flex items-center">
                 @auth
-                    <a href="{{ route('user.orders') }}" class="border-b-2 px-3.5 py-2.5 text-[13px] font-semibold {{ request()->routeIs('user.orders*') ? 'border-[#0f2255] text-[#0f2255]' : 'border-transparent text-[#3f4451] hover:text-[#0f2255]' }}">Pesanan Saya</a>
+                    @if($navIsAdmin)
+                        <a href="{{ route('admin.dashboard') }}" class="border-b-2 px-3.5 py-2.5 text-[13px] font-semibold {{ request()->routeIs('admin.*') ? 'border-[#0f2255] text-[#0f2255]' : 'border-transparent text-[#3f4451] hover:text-[#0f2255]' }}">Dasbor Admin</a>
+                    @else
+                        <a href="{{ route('user.orders') }}" class="border-b-2 px-3.5 py-2.5 text-[13px] font-semibold {{ request()->routeIs('user.orders*') ? 'border-[#0f2255] text-[#0f2255]' : 'border-transparent text-[#3f4451] hover:text-[#0f2255]' }}">Pesanan Saya</a>
+                    @endif
                 @endauth
                 <a href="{{ route('help.index') }}" class="border-b-2 px-3.5 py-2.5 text-[13px] font-semibold {{ request()->routeIs('help.*') ? 'border-[#0f2255] text-[#0f2255]' : 'border-transparent text-[#3f4451] hover:text-[#0f2255]' }}">Bantuan</a>
             </div>
@@ -249,6 +260,10 @@
 
                 @auth
                     <nav class="border-t border-[#f0eee6] px-2 py-2 text-[14px]">
+                        @if($navIsAdmin)
+                            <a href="{{ route('admin.dashboard') }}" class="block rounded-lg px-3 py-2.5 font-semibold text-[#e05c1a] hover:bg-[#faf5ee]">Dasbor Admin</a>
+                            <a href="{{ route('user.profile.edit') }}" class="block rounded-lg px-3 py-2.5 font-medium text-[#3f4451] hover:bg-[#fafaf8] hover:text-[#0f2255]">Profil & Buku Alamat</a>
+                        @else
                         <a href="{{ route('user.orders') }}" class="block rounded-lg px-3 py-2.5 font-medium text-[#3f4451] hover:bg-[#fafaf8] hover:text-[#0f2255]">Pesanan Saya</a>
                         <a href="{{ route('wishlist.index') }}" class="flex items-center justify-between rounded-lg px-3 py-2.5 font-medium text-[#3f4451] hover:bg-[#fafaf8] hover:text-[#0f2255]">
                             Buku Favorit
@@ -258,6 +273,7 @@
                             Keranjang
                             @if($navCartCount > 0)<span class="pill bg-[#f4f2ec] text-[#0f2255]">{{ $navCartCount }}</span>@endif
                         </a>
+                        @endif
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <button type="submit" class="block w-full rounded-lg px-3 py-2.5 text-left font-medium text-[#b42318] hover:bg-[#fdf2f2]">Keluar</button>

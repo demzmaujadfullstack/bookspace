@@ -14,6 +14,18 @@
         ['route' => 'user.profile.edit', 'label' => 'Profil & Alamat', 'icon' => 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', 'match' => 'user.profile*', 'count' => null],
         ['route' => 'help.index', 'label' => 'Pusat Bantuan', 'icon' => 'M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z', 'match' => 'help.*', 'count' => null],
     ];
+
+    if ($accountUser->isAdmin()) {
+        $buyerOnly = ['user.dashboard', 'user.orders', 'wishlist.index', 'cart.index'];
+        $links = array_values(array_filter($links, fn ($link) => ! in_array($link['route'], $buyerOnly, true)));
+        array_unshift($links, [
+            'route' => 'admin.dashboard',
+            'label' => 'Dasbor Admin',
+            'icon' => 'M10.325 9.432c.372-.372.977-.372 1.35 0l3 3a.957.957 0 010 1.35l-3 3a.957.957 0 01-1.35 0l-3-3a.957.957 0 010-1.35l3-3zM3 4h18M3 20h18',
+            'match' => 'admin.*',
+            'count' => null,
+        ]);
+    }
 @endphp
 
 <aside {{ $attributes }}>

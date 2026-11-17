@@ -128,6 +128,18 @@
                 <div class="p-5">
                     @if($book->stock > 0)
                         @auth
+                            @if(auth()->user()->isAdmin())
+                                <div class="rounded-lg border border-[#dfe6f5] bg-[#f5f8ff] px-4 py-3.5">
+                                    <p class="text-[13px] font-semibold text-[#0f2255]">Anda masuk sebagai administrator</p>
+                                    <p class="mt-1 text-[12px] leading-relaxed text-[#3f4451]">
+                                        Akun admin tidak dapat membeli buku. Ubah harga, stok, atau keterangan langsung dari dasbor.
+                                    </p>
+                                    <div class="mt-3 flex flex-wrap gap-2">
+                                        <a href="{{ route('admin.books.edit', $book) }}" class="btn-primary btn-sm">Ubah Data Buku</a>
+                                        <a href="{{ route('admin.stock.index') }}" class="btn-outline btn-sm">Kelola Stok</a>
+                                    </div>
+                                </div>
+                            @else
                             <form method="POST" action="{{ route('books.cart.add', $book) }}" id="buy-form" class="space-y-4">
                                 @csrf
                                 <div class="flex items-center gap-3">
@@ -153,6 +165,7 @@
                                     <a href="{{ route('cart.index') }}" class="btn-ghost sm:w-44">Lihat Keranjang</a>
                                 </div>
                             </form>
+                            @endif
                         @else
                             <a href="{{ route('login') }}" class="btn-primary w-full !py-3">Masuk untuk Memesan</a>
                             <p class="mt-2.5 text-[12px] text-[#6b6f78]">Anda perlu masuk untuk menyimpan buku ke keranjang atau daftar favorit.</p>
@@ -160,6 +173,7 @@
 
                         <div class="mt-4 flex flex-wrap items-center gap-2.5 border-t border-[#f0eee6] pt-4">
                             @auth
+                                @unless(auth()->user()->isAdmin())
                                 <form method="POST" action="{{ route('wishlist.toggle', $book) }}">
                                     @csrf
                                     <button type="submit"
@@ -168,6 +182,7 @@
                                         <span>{{ $isWishlisted ? 'Tersimpan di Favorit' : 'Simpan ke Favorit' }}</span>
                                     </button>
                                 </form>
+                                @endunless
                             @endauth
                             <button type="button" @click="previewOpen = true" class="pill border border-[#dcd8cd] bg-white text-[#3f4451] transition-colors hover:border-[#0f2255] hover:text-[#0f2255]">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#e05c1a]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
@@ -179,10 +194,12 @@
                             <p class="text-sm font-semibold text-[#3f4451]">Stok buku ini sedang habis.</p>
                             <p class="muted mt-1">Simpan ke favorit agar mudah menemukannya lagi saat stok bertambah.</p>
                             @auth
+                                @unless(auth()->user()->isAdmin())
                                 <form method="POST" action="{{ route('wishlist.toggle', $book) }}" class="mt-3">
                                     @csrf
                                     <button type="submit" class="btn-ghost btn-sm">{{ $isWishlisted ? 'Buka dari Favorit' : 'Simpan ke Favorit' }}</button>
                                 </form>
+                                @endunless
                             @else
                                 <a href="{{ route('login') }}" class="btn-ghost btn-sm mt-3">Masuk untuk menyimpan</a>
                             @endauth
@@ -301,6 +318,7 @@
             </div>
 
             @auth
+                @unless(auth()->user()->isAdmin())
                 @if($userReview)
                     <div class="mt-6" x-data="{ editing: {{ $errors->has('rating') || $errors->has('comment') ? 'true' : 'false' }} }" @cancel-review-edit="editing = false">
                         <div x-show="!editing" class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#e6e3db] bg-[#fafaf8] px-4 py-3 text-[13px] text-[#3f4451]">
@@ -323,6 +341,7 @@
                         <x-review-form :book="$book" />
                     </div>
                 @endif
+                @endunless
             @else
                 <div class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#e6e3db] bg-[#fafaf8] px-4 py-3 text-[13px] text-[#3f4451]">
                     <span>Bagikan kesan Anda setelah buku sampai di rumah.</span>
@@ -388,6 +407,7 @@
 
     {{-- ── Bilah beli tempel (mobile) ─────────────────────────── --}}
     @auth
+        @unless(auth()->user()->isAdmin())
         @if($book->stock > 0)
             <div class="fixed inset-x-0 bottom-0 z-30 border-t border-[#e6e3db] bg-white/95 px-4 py-3 backdrop-blur no-print lg:hidden">
                 <div class="mx-auto flex max-w-[1400px] items-center gap-3">
@@ -408,6 +428,7 @@
                 </div>
             </div>
         @endif
+        @endunless
     @endauth
 
     {{-- ── Modal cuplikan ──────────────────────────────────────── --}}
