@@ -10,7 +10,7 @@ BOOKSPACE adalah aplikasi e-commerce buku lengkap dengan dua sisi: **etalase pem
 
 📸 **Semua screenshot:** [github.com/demzmaujadfullstack/bookspace/tree/main/preview](https://github.com/demzmaujadfullstack/bookspace/tree/main/preview)
 
-16 tangkapan layar ini diambil langsung dari aplikasi yang berjalan (bukan mockup/desain ulang). Klik gambar mana pun untuk membuka ukuran penuh, atau buka [folder `preview/`](https://github.com/demzmaujadfullstack/bookspace/tree/main/preview) untuk melihat semuanya sekaligus.
+21 tangkapan layar ini diambil langsung dari aplikasi yang berjalan (bukan mockup/desain ulang). Klik gambar mana pun untuk membuka ukuran penuh, atau buka [folder `preview/`](https://github.com/demzmaujadfullstack/bookspace/tree/main/preview) untuk melihat semuanya sekaligus.
 
 ### Etalase Pembaca
 
@@ -32,7 +32,7 @@ BOOKSPACE adalah aplikasi e-commerce buku lengkap dengan dua sisi: **etalase pem
 | Dashboard Pembaca | Pesanan Saya |
 | --- | --- |
 | [![Dashboard](./preview/06-dashboard-akun.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/06-dashboard-akun.png?raw=true) | [![Pesanan](./preview/07-pesanan-saya.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/07-pesanan-saya.png?raw=true) |
-| Ringkasan aktivitas akun dan riwayat belanja. | Lacak status pesanan dari pembayaran hingga dikirim. |
+| Ringkasan aktivitas akun dan riwayat belanja. | Lacak status pesanan, nomor resi, dan tombol konfirmasi penerimaan paket. |
 
 | Bantuan & Live Chat | Profil Akun |
 | --- | --- |
@@ -55,6 +55,20 @@ BOOKSPACE adalah aplikasi e-commerce buku lengkap dengan dua sisi: **etalase pem
 | --- | --- |
 | [![Chat Admin](./preview/13-admin-chat.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/13-admin-chat.png?raw=true) | [![Login](./preview/16-login.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/16-login.png?raw=true) |
 | Menjawab pertanyaan pembaca secara real-time. | Autentikasi dengan Laravel Breeze. |
+
+### Alur Resi & Penerimaan Paket
+
+| Admin Tandai Dikirim | Pembaca Konfirmasi Terima |
+| --- | --- |
+| [![Admin Resi](./preview/21-admin-resi.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/21-admin-resi.png?raw=true) | [![Pesanan Resi](./preview/20-pesanan-resi.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/20-pesanan-resi.png?raw=true) |
+| Nomor resi wajib diisi saat pesanan diubah menjadi Dikirim. | Resi tampil di faktur plus tombol "Pesanan Sudah Diterima". |
+
+### Halaman Informasi Publik
+
+| Tentang | Kebijakan Privasi | Syarat & Ketentuan |
+| --- | --- | --- |
+| [![Tentang](./preview/17-tentang.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/17-tentang.png?raw=true) | [![Privasi](./preview/18-kebijakan-privasi.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/18-kebijakan-privasi.png?raw=true) | [![Syarat](./preview/19-syarat-ketentuan.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/19-syarat-ketentuan.png?raw=true) |
+| Profil toko beserta jumlah judul, kategori, ulasan, dan pesanan yang diproses. | Data apa saja yang disimpan dan siapa yang bisa melihatnya. | Aturan pembayaran, pembatalan, pengembalian dana, dan moderasi ulasan. |
 
 ---
 
