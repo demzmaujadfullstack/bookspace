@@ -145,6 +145,26 @@ class OrderLifecycleTest extends TestCase
         $this->assertSame(8, $this->book->refresh()->stock, 'Stok hanya boleh dipotong satu kali.');
     }
 
+    public function test_payment_proof_is_only_readable_by_owner_and_admin(): void
+    {
+        Storage::fake('local');
+
+        $order = $this->checkoutTwoCopies();
+        $this->actingAs($this->buyer)->post(route('checkout.payment.upload', $order), [
+            'proof_image' => UploadedFile::fake()->image('bukti-transfer.png'),
+        ]);
+
+        $payment = $order->refresh()->latestPayment;
+
+        $this->actingAs($this->buyer)->get(route('payment.proof', $payment))->assertStatus(200);
+        $this->actingAs($this->admin)->get(route('payment.proof', $payment))->assertStatus(200);
+        $this->actingAs(User::factory()->create())->get(route('payment.proof', $payment))->assertStatus(403);
+
+        // actingAs bertahan sampai akhir test, jadi guard harus dilepas untuk mengecek akses tamu.
+        $this->app['auth']->forgetGuards();
+        $this->get(route('payment.proof', $payment))->assertRedirect('/login');
+    }
+
     public function test_buyer_cannot_open_another_customers_order(): void
     {
         $order = $this->checkoutTwoCopies();

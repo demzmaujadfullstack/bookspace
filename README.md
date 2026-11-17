@@ -62,9 +62,9 @@ BOOKSPACE adalah aplikasi e-commerce buku lengkap dengan dua sisi: **etalase pem
 
 ### Untuk Pembaca
 - **Katalog & pencarian** — filter kategori genre, rentang harga, buku diskon, urutkan berdasarkan terbaru/terlaris/harga, plus pencarian judul, penulis, atau ISBN.
-- **Detail buku** — informasi bibliografi (ISBN, penerbit, tahun, jumlah halaman), harga coret beserta persen diskon, status stok, dan ulasan dari pembaca lain.
+- **Detail buku** — informasi bibliografi (ISBN, penerbit, tahun, jumlah halaman), harga coret beserta persen diskon, status stok, dan ulasan pembaca yang dapat diubah atau dihapus oleh penulisnya.
 - **Keranjang & checkout** — ubah jumlah item, pilih metode pembayaran, isi alamat pengiriman, lalu unggah bukti transfer.
-- **Pelacakan pesanan** — status pembayaran, pengiriman, dan riwayat pesanan lengkap dengan nomor faktur.
+- **Pelacakan pesanan** — status pembayaran dan pengiriman, nomor resi dari admin, tombol konfirmasi "Pesanan Sudah Diterima", serta riwayat pesanan lengkap dengan nomor faktur.
 - **Daftar favorit** — simpan buku untuk dibeli nanti.
 - **Bantuan & live chat** — FAQ yang bisa dibuka-tutup dan obrolan langsung dengan admin.
 - **Authentikasi** — registrasi, login, lupa password, dan profil akun (Laravel Breeze).
@@ -75,11 +75,102 @@ BOOKSPACE adalah aplikasi e-commerce buku lengkap dengan dua sisi: **etalase pem
 - **Manajemen katalog** — CRUD buku dan kategori genre.
 - **Manajemen stok** — audit trail pergerakan stok per buku.
 - **Etalase banner** — atur banner promo di beranda beserta urutan tampilannya.
-- **Verifikasi pembayaran** — terima atau tolak bukti transfer, lalu perbarui status pesanan.
+- **Verifikasi pembayaran** — terima atau tolak bukti transfer, lalu perbarui status pesanan beserta nomor resi ekspedisi.
 - **Laporan penjualan** — filter per periode dan ekspor CSV.
 - **Kelola pengguna** — daftar pembaca dan detail akun.
-- **Pengaturan sistem** — nama toko, ongkir gratis minimal, dan teks pengumuman.
-- **Pusat bantuan** — menjawab chat pembaca dan menutup percakapan.
+- **Pengaturan sistem** — nama toko, ambang gratis ongkir, dan teks pengumuman.
+- **Pusat bantuan** — menjawab chat pembaca, dengan badge pesan baru dan konfirmasi sebelum menutup percakapan.
+- **Moderasi ulasan** — menghapus ulasan yang tidak pantas dari halaman detail buku.
+
+---
+
+## 🔄 Alur Pesanan
+
+Status pesanan bergerak satu arah; satu-satunya lompatan kembali adalah pembatalan yang disepakati dengan admin.
+
+```mermaid
+flowchart TD
+    A[Keranjang] --> B[Checkout]
+    B -->|"transfer / QRIS"| C[Menunggu Pembayaran]
+    B -->|COD| E[Menunggu Verifikasi]
+    C -->|"unggah bukti transfer"| E
+    C -->|"batal sendiri"| X[Dibatalkan]
+    E -->|"admin menolak"| X
+    E -->|"admin menyetujui<br/>(stok dipotong dalam 1 transaksi + row lock)"| D[Dibayar]
+    D -->|"batal + musyawarah<br/>(stok dikembalikan)"| X
+    D --> F[Diproses / packing]
+    F -->|"admin isi nomor resi"| G[Dikirim]
+    G -->|"pembeli tekan Pesanan Sudah Diterima"| H[Selesai]
+
+    classDef done fill:#e7f6ec,stroke:#2f855a,color:#1c4532;
+    classDef stop fill:#fdecec,stroke:#c53030,color:#742a2a;
+    class H done;
+    class X stop;
+```
+
+## 🗄️ Skema Database
+
+```mermaid
+erDiagram
+    USERS ||--o{ ORDERS : melakukan
+    USERS ||--o{ CARTS : memiliki
+    USERS ||--o{ ADDRESSES : punya
+    USERS ||--o{ REVIEWS : menulis
+    USERS ||--o{ WISHLISTS : menyimpan
+    USERS ||--o{ CONVERSATIONS : menghubungi_admin
+    USERS ||--o{ MESSAGES : mengirim
+
+    CATEGORIES ||--o{ BOOKS : mengelompokkan
+    BOOKS ||--o{ ORDER_ITEMS : dipesan
+    BOOKS ||--o{ CART_ITEMS : masuk_keranjang
+    BOOKS ||--o{ REVIEWS : dinilai
+    BOOKS ||--o{ STOCK_MOVEMENTS : riwayat_stok
+
+    CARTS ||--o{ CART_ITEMS : berisi
+    ORDERS ||--o{ ORDER_ITEMS : berisi
+    ORDERS ||--o{ PAYMENTS : dibayar_lewat
+    ORDERS ||--o{ STOCK_MOVEMENTS : memicu
+    CONVERSATIONS ||--o{ MESSAGES : berisi
+
+    USERS {
+        bigint id PK
+        string name
+        string email UK
+        enum role "admin | user"
+        softDeletes deleted_at "akun dihapus tanpa menghapus transaksi"
+    }
+
+    BOOKS {
+        bigint id PK
+        bigint category_id FK
+        string title
+        string slug UK
+        string isbn UK
+        unsignedInteger price
+        unsignedTinyInteger discount_percent
+        unsignedInteger stock
+        boolean is_featured
+    }
+
+    ORDERS {
+        bigint id PK
+        bigint user_id FK
+        string code UK "BKSP-YYYYMMDD-XXXXX"
+        enum status "8 nilai, lihat alur di atas"
+        unsignedInteger total
+        string tracking_number "nomor resi dari admin"
+        timestamp paid_at
+        timestamp shipped_at
+    }
+
+    PAYMENTS {
+        bigint id PK
+        bigint order_id FK
+        enum method "cod | transfer | qris"
+        enum status "menunggu | menunggu_verifikasi | diterima | ditolak"
+        string proof_image "disimpan di disk local (non-public)"
+    }
+```
 
 ---
 
@@ -157,17 +248,19 @@ Hasil `php artisan migrate --seed`:
 app/
 ├── Http/Controllers/
 │   ├── Admin/          # 10 controller panel admin
-│   └── User/           # profil & pesanan pembaca
+│   └── User/           # profil, pesanan & pusat bantuan pembaca
 ├── Models/             # 16 model (Book, Order, Payment, StockMovement, ...)
 database/
-├── migrations/         # 19 migrasi
-└── seeders/            # data contoh: 20 buku, 10 kategori, 47 pesanan
+├── migrations/         # 21 migrasi
+└── seeders/            # data contoh: 20 buku, 10 kategori, 47 pesanan, 5 banner, ±21 ulasan
 resources/views/
 ├── admin/              # tampilan panel admin
-├── books/ cart/ checkout/  # alur belanja pembaca
-└── layouts/ components/     # tata letak & komponen Blade
+├── books/ cart/ checkout/ user/  # alur belanja pembaca
+├── pages/              # tentang, kebijakan privasi, syarat & ketentuan
+└── layouts/ components/ # tata letak & komponen Blade (book-card, review-form, breadcrumbs, ...)
 preview/                # tangkapan layar aplikasi
-tests/                  # 13 file pengujian unit & feature
+routes/web.php          # 98 route
+tests/                  # 16 file pengujian unit & feature
 ```
 
 ---
@@ -175,8 +268,67 @@ tests/                  # 13 file pengujian unit & feature
 ## ✅ Pengujian
 
 ```bash
-php artisan test
+php artisan test          # 53 tes, 158 assertion (sqlite in-memory)
+vendor/bin/pint           # perbaiki gaya kode
+vendor/bin/pint --test    # periksa tanpa mengubah
 ```
+
+Cakupan tes yang paling penting: `OrderLifecycleTest` (keranjang → checkout → bukti transfer → verifikasi admin → resi → konfirmasi terima), `StockAndTransactionTest` (stok hanya berubah saat pembayaran disetujui), `ShippingTrackingTest` (resi wajib saat dikirim + hak konfirmasi pembeli), `WishlistAndReviewTest` (ubah/hapus ulasan dan paginasi daftar), `AdminAccessTest` (pemisahan hak admin/pembaca), `StaticPageTest`, dan rangkaian `Auth/*` bawaan Breeze.
+
+---
+
+## 🔒 Catatan Keamanan
+
+Temuan audit yang sudah diperbaiki:
+
+| Area | Perbaikan |
+| --- | --- |
+| Live chat | Isi pesan di-escape sebelum tampil; tidak ada lagi `innerHTML` pada balasan, sehingga stored XSS tidak dapat berjalan. |
+| Bukti transfer | Pindah dari `storage/app/public` ke disk `local` (tidak bisa diakses langsung). Berkas disajikan lewat route yang memeriksa pemilik pesanan dan admin. |
+| Ekspor CSV laporan | Nilai yang diawali `=`, `+`, `-`, `@`, tab, atau CR diberi prefiks pelindung agar tidak dieksekusi Excel sebagai formula. |
+| Filter tanggal laporan | Format `YYYY-MM-DD` divalidasi sebelum masuk query. |
+| Mass assignment | Kolom `role` dikeluarkan dari `$fillable` pengguna; kenaikan hak akses lewat form tidak mungkin. |
+| Rate limiting | `throttle` pada login, pencarian, dan pengiriman chat. |
+| SQL | Tidak ada string concatenation di query; filter memakai binding. |
+
+Catatan yang belum ditindaklanjuti (disengaja, karena di luar lingkup tugas):
+- Belum ada 2FA dan belum ada enkripsi at-rest untuk alamat/nomor telepon (masih plaintext di DB).
+- Bukti pembayaran tidak di-*scan* isi gambarnya; siapa pun yang punya tautan sah tetap bisa mengunggah berkas apa pun selama tipenya gambar.
+
+---
+
+## ⚡ Catatan Performa
+
+Sebelum vs sesudah perbaikan (jumlah query MySQL per permintaan, diukur dengan `DB::listen`, bukan perkiraan):
+
+| Halaman | Sebelum | Sesudah |
+| --- | --- | --- |
+| Beranda | 36 | 14 |
+| Katalog | 23 | 4 |
+| Detail buku | 14 | 6 (tamu) / 10 (login) |
+| Daftar favorit | 13 | 8 |
+| Admin → stok | 21 | 7 |
+| Admin → dashboard | ±45 | 16 |
+
+Yang dilakukan:
+- **Eager loading** (`forCards()`) untuk kategori + agregat rating di semua kartu buku; `withCount` menggantikan query per baris.
+- **Memo per permintaan** untuk wishlist pengguna dan daftar kategori navbar, alih-alih query berulang.
+- **Cache ringan** untuk settings (array scalar, TTL 5 menit) dan otomatis disegarkan lewat model event; Eloquent Collection sengaja tidak di-cache karena Laravel 13 menolak deserialisasi objek dari cache.
+- **Index baru** untuk filter katalog, stok, diskon, `is_featured`, dan pasangan `[book_id, rating]` pada review; pemilihan index diverifikasi dengan `EXPLAIN`, bukan diasumsikan.
+- **Query agregat** (`GROUP BY status`, `DATE(created_at)`) menggantikan belasan query `count()` per filter status di panel admin.
+
+---
+
+## 🧾 Batasan Proyek
+
+- **Pembayaran belum terhubung gateway.** QRIS dan transfer hanya pencatatan manual: admin mencocokkan mutasi lalu menyetujui bukti yang diunggah. Tidak ada webhook, tidak ada rekonsiliasi otomatis.
+- **Ongkir tidak dihitung dari kurir.** Ongkos kirim memakai tarif tetap yang dikonfigurasi admin; tidak ada integrasi API kurir untuk ongkir real-time.
+- **Otomasi email memakai log.** `MAIL_MAILER=log` (bawaan `.env.example`), jadi tautan *reset password* dan notifikasi tidak dikirim ke inbox — isinya ditulis ke `storage/logs/laravel.log`. Untuk mengirim sungguhan, isi `MAIL_*` dengan SMTP/Resend dan ubah mailer-nya.
+- **Nomor resi tidak dilacak otomatis.** Resi ditampilkan apa adanya; pengecekan status paket masih harus dibuka di situs ekspedisi.
+- **Pengembalian dana tidak ada.** Pesanan yang sudah dibayar dapat dibatalkan, tetapi proses refund dilakukan di luar sistem.
+- **Data contoh, bukan data produksi.** 20 buku, 10 kategori, dan 47 pesanan berasal dari seeder; cover buku juga dihasilkan sebagai SVG.
+- **Belum ada multi-toko/warehouse & perpajakan.** Satu admin, satu gudang, tanpa faktur pajak.
+- **Ulasan terbuka untuk semua pengguna login.** Syarat "hanya pembeli yang boleh ulasan" belum ditegakkan; moderasi dilakukan manual oleh admin.
 
 ---
 
