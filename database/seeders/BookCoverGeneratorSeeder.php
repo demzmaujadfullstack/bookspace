@@ -114,14 +114,18 @@ class BookCoverGeneratorSeeder extends Seeder
             $lines = [];
             $currentLine = '';
             foreach ($words as $w) {
-                if (strlen($currentLine . ' ' . $w) > 16) {
-                    if ($currentLine) $lines[] = trim($currentLine);
+                if (strlen($currentLine.' '.$w) > 16) {
+                    if ($currentLine) {
+                        $lines[] = trim($currentLine);
+                    }
                     $currentLine = $w;
                 } else {
-                    $currentLine .= ' ' . $w;
+                    $currentLine .= ' '.$w;
                 }
             }
-            if ($currentLine) $lines[] = trim($currentLine);
+            if ($currentLine) {
+                $lines[] = trim($currentLine);
+            }
 
             $titleSvg = '';
             $startY = 240 - (count($lines) * 16);
@@ -183,7 +187,7 @@ class BookCoverGeneratorSeeder extends Seeder
 </svg>
 SVG;
 
-            $filename = 'covers/' . $slug . '.svg';
+            $filename = 'covers/'.$slug.'.svg';
             Storage::disk('public')->put($filename, $svg);
 
             $book->update(['cover' => $filename]);
