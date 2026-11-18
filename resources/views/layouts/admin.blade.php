@@ -4,7 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Admin Dashboard') — BOOKSPACE Admin</title>
+    <title>@yield('title', 'Admin Dashboard') — {{ \App\Models\Setting::siteName() }} Admin</title>
+    <x-brand-favicon />
 
     <!-- Google Fonts: Lora + Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,17 +28,7 @@
     >
         {{-- Brand / Logo --}}
         <div class="p-5 border-b border-white/10 flex items-center justify-between">
-            <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2.5">
-                <div class="bg-[#e05c1a] rounded-lg p-1.5 shadow-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                    </svg>
-                </div>
-                <div>
-                    <span class="font-serif-display font-bold text-lg text-white tracking-tight block">BOOKSPACE</span>
-                    <span class="block text-[9px] text-[#e05c1a] font-bold uppercase tracking-widest">Admin Control</span>
-                </div>
-            </a>
+            <x-brand-logo tone="admin" />
             <button @click="sidebarOpen = false" class="lg:hidden text-white/70 hover:text-white p-1">✕</button>
         </div>
 

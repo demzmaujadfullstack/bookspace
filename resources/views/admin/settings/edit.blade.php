@@ -37,7 +37,61 @@
                 </div>
             </div>
 
-            {{-- 2. Rekening Pembayaran --}}
+            {{-- 2. Branding --}}
+            @php
+                $logoPreview = \App\Models\Setting::mediaUrl('logo_image');
+                $faviconPreview = \App\Models\Setting::mediaUrl('favicon_image');
+            @endphp
+            <h2 class="font-display font-bold text-base text-gray-900 mb-4 pb-3 border-b border-gray-100">Logo &amp; Favicon Toko</h2>
+            <div class="mb-6 space-y-4">
+                <p class="text-[11px] text-gray-500 -mb-1">Identitas visual toko bisa diganti dari sini tanpa menyentuh kode. Logo tampil di navbar, footer, dan sidebar admin, sedangkan favicon tampil di tab browser.</p>
+
+                <div class="grid gap-4 md:grid-cols-2">
+                    <div class="border border-gray-100 rounded-xl p-4 bg-gray-50/40">
+                        <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">Logo Toko</label>
+                        <div class="mb-3 flex h-20 items-center justify-center rounded-xl border border-gray-100 bg-white p-3">
+                            @if($logoPreview)
+                                <img src="{{ $logoPreview }}" alt="Logo saat ini" class="max-h-full max-w-full object-contain">
+                            @else
+                                <span class="text-[11px] text-gray-400">Belum ada logo &mdash; memakai tanda BOOKSPACE bawaan.</span>
+                            @endif
+                        </div>
+                        <input type="file" name="logo_image" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#0f2557] file:text-white hover:file:bg-orange-500 border border-gray-200 rounded-xl p-2 cursor-pointer bg-white">
+                        <label class="mt-2 flex items-center gap-2 text-[11px] text-gray-600">
+                            <input type="checkbox" name="remove_logo_image" value="1" class="rounded border-gray-300 text-[#e05c1a] focus:ring-orange-300">
+                            Hapus logo dan kembali ke tampilan bawaan
+                        </label>
+                        <p class="text-[11px] text-gray-400 mt-1">Format PNG, JPG, atau WEBP. Maksimal 2 MB, disarankan tinggi 72&ndash;160 px.</p>
+                    </div>
+
+                    <div class="border border-gray-100 rounded-xl p-4 bg-gray-50/40">
+                        <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">Favicon (Ikon Tab)</label>
+                        <div class="mb-3 flex h-20 items-center gap-3 rounded-xl border border-gray-100 bg-white p-3">
+                            @if($faviconPreview)
+                                <img src="{{ $faviconPreview }}" alt="Favicon saat ini" class="h-10 w-10 shrink-0 rounded object-contain">
+                                <span class="text-[11px] text-gray-500">Pratinjau pada ukuran kecil sering terlihat berbeda dari aslinya.</span>
+                            @else
+                                <span class="text-[11px] text-gray-400">Belum ada favicon &mdash; memakai logo toko atau favicon.ico bawaan.</span>
+                            @endif
+                        </div>
+                        <input type="file" name="favicon_image" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#0f2557] file:text-white hover:file:bg-orange-500 border border-gray-200 rounded-xl p-2 cursor-pointer bg-white">
+                        <label class="mt-2 flex items-center gap-2 text-[11px] text-gray-600">
+                            <input type="checkbox" name="remove_favicon_image" value="1" class="rounded border-gray-300 text-[#e05c1a] focus:ring-orange-300">
+                            Hapus favicon
+                        </label>
+                        <p class="text-[11px] text-gray-400 mt-1">Format PNG atau WEBP. Maksimal 1 MB, disarankan persegi 64&times;64 px.</p>
+                    </div>
+                </div>
+
+                <label class="flex items-start gap-2 text-[12px] text-gray-700">
+                    <input type="checkbox" name="logo_show_text" value="1"
+                           {{ old('logo_show_text', ($settings['logo_show_text'] ?? '1') === '1') ? 'checked' : '' }}
+                           class="mt-0.5 rounded border-gray-300 text-[#e05c1a] focus:ring-orange-300">
+                    <span>Tampilkan nama toko di samping logo. Centang bila logo Anda hanya berisi ikon; hilangkan centang bila logo sudah memuat tulisan nama toko.</span>
+                </label>
+            </div>
+
+            {{-- 3. Rekening Pembayaran --}}
             <h2 class="font-display font-bold text-base text-gray-900 mb-4 pb-3 border-b border-gray-100">Informasi Rekening Bank (Transfer Manual)</h2>
             <div class="grid md:grid-cols-3 gap-4 mb-6">
                 <div>
@@ -54,7 +108,7 @@
                 </div>
             </div>
 
-            {{-- 3. QRIS Image --}}
+            {{-- 4. QRIS Image --}}
             <h2 class="font-display font-bold text-base text-gray-900 mb-4 pb-3 border-b border-gray-100">Gambar QRIS Toko</h2>
             <div class="mb-6 flex items-start gap-4">
                 @if(isset($settings['qris_image']) && $settings['qris_image'] && file_exists(public_path('storage/' . $settings['qris_image'])))
@@ -69,7 +123,7 @@
                 </div>
             </div>
 
-            {{-- 4. Carousel & Footer --}}
+            {{-- 5. Carousel & Footer --}}
             <h2 class="font-display font-bold text-base text-gray-900 mb-4 pb-3 border-b border-gray-100">Konfigurasi Slider & Footer</h2>
             <div class="space-y-4 mb-8">
                 <div>

@@ -1,6 +1,6 @@
 @extends('layouts.bookspace')
 
-@section('title', 'BOOKSPACE — Toko Buku Online & Sastra Pilihan')
+@section('title', 'Toko Buku Online & Sastra Pilihan')
 
 @push('styles')
 <style>

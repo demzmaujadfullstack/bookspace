@@ -39,19 +39,9 @@
                 </svg>
             </button>
 
-            <a href="{{ route('home') }}" class="flex shrink-0 items-center gap-2.5">
-                <span class="grid h-9 w-9 place-items-center rounded-lg bg-[#0f2255] text-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                    </svg>
-                </span>
-                <span class="leading-none">
-                    <span class="block font-serif-display text-[19px] font-bold tracking-tight text-[#0f2255]">BOOKSPACE</span>
-                    <span class="mt-1 hidden text-[10px] uppercase tracking-[0.18em] text-[#8b8578] sm:block">Toko Buku Online</span>
-                </span>
-            </a>
+            <x-brand-logo tone="navbar" />
 
-            <div class="mx-auto hidden w-full max-w-2xl md:block">
+            <div class="mx-auto hidden w-full max-w-2xl min-w-0 md:block">
                 @include('components.site-search')
             </div>
 
@@ -210,7 +200,7 @@
              class="absolute inset-y-0 left-0 flex w-[86%] max-w-[360px] flex-col bg-white shadow-2xl">
 
             <div class="flex h-14 shrink-0 items-center justify-between border-b border-[#e6e3db] px-4">
-                <span class="font-serif-display text-[17px] font-bold text-[#0f2255]">BOOKSPACE</span>
+                <x-brand-logo tone="guest" class="inline-flex" />
                 <button type="button" @click="drawer = false" aria-label="Tutup menu" class="grid h-9 w-9 place-items-center rounded-lg text-[#3f4451] hover:bg-[#f4f2ec]">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>

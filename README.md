@@ -10,7 +10,7 @@ BOOKSPACE adalah aplikasi e-commerce buku lengkap dengan dua sisi: **etalase pem
 
 📸 **Semua screenshot:** [github.com/demzmaujadfullstack/bookspace/tree/main/preview](https://github.com/demzmaujadfullstack/bookspace/tree/main/preview)
 
-22 tangkapan layar ini diambil langsung dari aplikasi yang berjalan (bukan mockup/desain ulang). Klik gambar mana pun untuk membuka ukuran penuh, atau buka [folder `preview/`](https://github.com/demzmaujadfullstack/bookspace/tree/main/preview) untuk melihat semuanya sekaligus.
+24 tangkapan layar ini diambil langsung dari aplikasi yang berjalan (bukan mockup/desain ulang). Klik gambar mana pun untuk membuka ukuran penuh, atau buka [folder `preview/`](https://github.com/demzmaujadfullstack/bookspace/tree/main/preview) untuk melihat semuanya sekaligus.
 
 ### Etalase Pembaca
 
@@ -63,6 +63,13 @@ BOOKSPACE adalah aplikasi e-commerce buku lengkap dengan dua sisi: **etalase pem
 | [![Admin Resi](./preview/21-admin-resi.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/21-admin-resi.png?raw=true) | [![Pesanan Resi](./preview/20-pesanan-resi.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/20-pesanan-resi.png?raw=true) |
 | Nomor resi wajib diisi saat pesanan diubah menjadi Dikirim. | Resi tampil di faktur plus tombol "Pesanan Sudah Diterima". |
 
+### Branding Toko (Logo & Favicon)
+
+| Pengaturan Branding | Hasil di Etalase |
+| --- | --- |
+| [![Pengaturan Branding](./preview/23-admin-pengaturan.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/23-admin-pengaturan.png?raw=true) | [![Logo dari Admin](./preview/24-logo-dari-admin.png)](https://github.com/demzmaujadfullstack/bookspace/blob/main/preview/24-logo-dari-admin.png?raw=true) |
+| Unggah logo dan favicon dari `/admin/pengaturan`, hapus lagi bila ingin kembali ke tampilan bawaan. | Logo pengganti langsung tampil di navbar, footer, drawer mobile, dan sidebar admin. |
+
 ### Halaman Informasi Publik
 
 | Tentang | Kebijakan Privasi | Syarat & Ketentuan |
@@ -93,12 +100,15 @@ BOOKSPACE adalah aplikasi e-commerce buku lengkap dengan dua sisi: **etalase pem
 - **Verifikasi pembayaran** — terima atau tolak bukti transfer, lalu perbarui status pesanan beserta nomor resi ekspedisi.
 - **Laporan penjualan** — filter per periode dan ekspor CSV.
 - **Kelola pengguna** — daftar pembaca dan detail akun.
-- **Pengaturan sistem** — nama toko, ambang gratis ongkir, dan teks pengumuman.
+- **Pengaturan sistem** — nama toko, tagline, ambang gratis ongkir, dan teks pengumuman.
+- **Branding toko dari admin** — unggah logo dan favicon langsung dari halaman Pengaturan, tanpa menyentuh kode. Logo dipakai di navbar, footer, drawer mobile, dan sidebar admin; favicon dipakai di tab browser (kalau favicon belum diunggah, logo yang dipakai). Tersedia tombol hapus untuk kembali ke identitas bawaan dan centang untuk menyembunyikan nama toko bila logonya sudah memuat tulisan.
 - **Pusat bantuan** — menjawab chat pembaca, dengan badge pesan baru dan konfirmasi sebelum menutup percakapan.
 - **Moderasi ulasan** — menghapus ulasan yang tidak pantas dari halaman detail buku.
 - **Pemisahan hak akses** — middleware `admin` menjaga seluruh `/admin/*`, sementara middleware `buyer` menutup area belanja (`/cart`, `/checkout`, `/favorit`, `/akun/pesanan`, tambah keranjang) untuk akun admin. Admin tetap bisa membuka etalase dan langsung mengedit buku yang sedang dilihatnya.
 
 Penolakan akses dan halaman hilang ditampilkan rapi lewat `resources/views/errors/403.blade.php` dan `404.blade.php`: ada penjelasan penyebabnya, tombol kembali ke beranda/katalog, tautan ke dasbor admin, dan kolom pencarian pada halaman 404.
+
+Logo dan favicon disimpan sebagai baris `logo_image` / `favicon_image` di tabel `settings` (filenya di `storage/app/public/settings`) dan dibaca lewat `App\Models\Setting::logoUrl()` serta `faviconUrl()`, yang otomatis kembali ke identitas bawaan bila filenya belum ada. URL-nya diberi penanda versi (`?v=<waktu-ubah-file>`) supaya browser langsung mengambil gambar baru begitu admin menggantinya, tanpa perlu hard refresh.
 
 ---
 
@@ -289,7 +299,7 @@ resources/views/
 └── layouts/ components/ # tata letak & komponen Blade (book-card, review-form, breadcrumbs, ...)
 preview/                # tangkapan layar aplikasi
 routes/web.php          # 102 route
-tests/                  # 17 file pengujian unit & feature
+tests/                  # 19 file pengujian unit & feature
 ```
 
 ---
@@ -297,7 +307,7 @@ tests/                  # 17 file pengujian unit & feature
 ## ✅ Pengujian
 
 ```bash
-php artisan test          # 65 tes, 194 assertion (sqlite in-memory)
+php artisan test          # 82 tes, 287 assertion (sqlite in-memory)
 vendor/bin/pint           # perbaiki gaya kode
 vendor/bin/pint --test    # periksa tanpa mengubah
 ```

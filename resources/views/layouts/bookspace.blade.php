@@ -4,8 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'BOOKSPACE') — Toko Buku Online</title>
+    @php $brandName = \App\Models\Setting::siteName(); @endphp
+    <title>@yield('title', 'Beranda') — {{ $brandName }}</title>
     <meta name="description" content="@yield('meta_description', 'BOOKSPACE — Toko buku online terpercaya dengan ribuan koleksi sastra, fiksi, nonfiksi, dan akademik.')">
+    <x-brand-favicon />
 
     <!-- Google Fonts: Lora (Editorial Serif) & Inter (Modern Sans) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
