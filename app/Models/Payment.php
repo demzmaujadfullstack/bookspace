@@ -38,7 +38,6 @@ class Payment extends Model
     public function methodLabel(): string
     {
         return match ($this->method) {
-            'cod' => 'COD (Bayar di Tempat)',
             'transfer' => 'Transfer Bank',
             'qris' => 'QRIS',
             default => ucfirst($this->method),

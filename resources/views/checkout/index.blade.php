@@ -148,11 +148,6 @@
                                     'Pindai dengan GoPay, OVO, DANA, ShopeePay, Livin\', BRImo, atau BCA mobile.',
                                     'Scan cepat',
                                 ],
-                                'cod' => [
-                                    'Bayar di Tempat (COD)',
-                                    'Bayar tunai ke kurir saat buku tiba di alamat Anda.',
-                                    'Tunai kurir',
-                                ],
                             ];
                         @endphp
 
@@ -178,10 +173,6 @@
                                 @elseif($value === 'qris')
                                     <div x-show="method === 'qris'" x-transition class="mt-3 border-t border-[#e6e3db] pt-3 text-[12px] text-[#c54e12]">
                                         Kode QRIS toko tampil di langkah berikutnya. Unggah tangkapan layar pembayarannya.
-                                    </div>
-                                @else
-                                    <div x-show="method === 'cod'" x-transition class="mt-3 border-t border-[#e6e3db] pt-3 text-[12px] text-[#3f4451]">
-                                        Pastikan nomor WhatsApp aktif; admin menghubungi Anda untuk mengonfirmasi kelayakan kirim.
                                     </div>
                                 @endif
                             </label>

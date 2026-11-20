@@ -41,7 +41,7 @@ class OrderSeeder extends Seeder
             'menunggu_pembayaran',
         ];
 
-        $paymentMethods = ['transfer', 'qris', 'cod'];
+        $paymentMethods = ['transfer', 'qris'];
 
         for ($i = 29; $i >= 0; $i--) {
             $orderDate = Carbon::now()->subDays($i)->setHour(rand(8, 20))->setMinute(rand(0, 59));

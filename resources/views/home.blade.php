@@ -115,7 +115,7 @@
         @foreach([
             ['Buku 100% asli', 'Dipasok langsung oleh penerbit resmi', 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z'],
             ['Ongkir gratis', 'Untuk belanja di atas Rp'.number_format((int) \App\Models\Setting::value('free_shipping_threshold', 200000), 0, ',', '.'), 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4'],
-            ['Banyak metode bayar', 'Transfer bank, QRIS, dan COD', 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'],
+            ['Banyak metode bayar', 'Transfer bank dan QRIS', 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'],
             ['Dukungan pelanggan', 'Balasan chat di hari kerja', 'M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z'],
         ] as [$title, $sub, $path])
             <div class="flex items-start gap-3">

@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained()->cascadeOnDelete();
-            $table->enum('method', ['cod', 'transfer', 'qris']);
+            $table->enum('method', ['transfer', 'qris']);
             $table->unsignedInteger('amount');
             $table->enum('status', ['menunggu', 'menunggu_verifikasi', 'diterima', 'ditolak'])->default('menunggu');
             $table->string('proof_image')->nullable();

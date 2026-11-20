@@ -39,7 +39,7 @@ class HelpController extends Controller
             ],
             [
                 'q' => 'Metode pembayaran apa saja yang didukung?',
-                'a' => 'BOOKSPACE mendukung Transfer Bank Manual (BCA, Mandiri, BNI, BRI), QRIS untuk seluruh e-wallet & m-banking, serta Cash on Delivery (COD) bayar di tempat.',
+                'a' => 'BOOKSPACE mendukung Transfer Bank Manual (BCA, Mandiri, BNI, BRI) dan QRIS untuk seluruh e-wallet & m-banking.',
             ],
             [
                 'q' => 'Bagaimana cara mengecek status pesanan saya?',

@@ -56,7 +56,7 @@ class CheckoutController extends Controller
             'phone' => ['required', 'string', 'max:20'],
             'address' => ['required', 'string', 'max:500'],
             'note' => ['nullable', 'string', 'max:500'],
-            'payment_method' => ['required', 'in:cod,transfer,qris'],
+            'payment_method' => ['required', 'in:transfer,qris'],
             'city' => [$request->boolean('save_address') ? 'required' : 'nullable', 'string', 'max:80'],
             'postal_code' => ['nullable', 'string', 'max:10'],
             'save_address' => ['nullable', 'boolean'],
@@ -82,13 +82,7 @@ class CheckoutController extends Controller
             $subtotal = $cart->items->sum(fn ($i) => $i->subtotal());
             $orderCode = 'BKSP-'.date('Ymd').'-'.strtoupper(Str::random(5));
 
-            // Status depends on method
-            // COD starts as pending confirmation from admin
-            // Transfer/QRIS starts as menunggu_pembayaran
-            $initialStatus = match ($validated['payment_method']) {
-                'cod' => Order::MENUNGGU_VERIFIKASI,
-                default => Order::MENUNGGU_PEMBAYARAN,
-            };
+            $initialStatus = Order::MENUNGGU_PEMBAYARAN;
 
             $order = Order::create([
                 'user_id' => $user->id,
@@ -120,7 +114,7 @@ class CheckoutController extends Controller
                 'order_id' => $order->id,
                 'method' => $validated['payment_method'],
                 'amount' => $subtotal,
-                'status' => $validated['payment_method'] === 'cod' ? Payment::MENUNGGU_VERIFIKASI : Payment::MENUNGGU,
+                'status' => Payment::MENUNGGU,
                 'bank_name' => $settings['bank_name'] ?? 'BCA',
                 'account_number' => $settings['bank_account_number'] ?? '-',
                 'account_holder' => $settings['bank_account_name'] ?? 'BOOKSPACE',
@@ -132,10 +126,6 @@ class CheckoutController extends Controller
 
             // Clear the cart
             $cart->items()->delete();
-
-            if ($validated['payment_method'] === 'cod') {
-                return redirect()->route('checkout.success', $order)->with('success', 'Pesanan COD berhasil dibuat! Menunggu verifikasi admin.');
-            }
 
             return redirect()->route('checkout.payment', $order)->with('success', 'Pesanan berhasil dibuat. Silakan selesaikan pembayaran.');
         });

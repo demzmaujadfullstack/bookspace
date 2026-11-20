@@ -109,7 +109,7 @@
     <div class="border-t border-white/10 bg-[#081129]">
         <div class="shell flex flex-col items-center justify-between gap-3 py-5 text-[12px] text-white/50 sm:flex-row">
             <p>&copy; {{ date('Y') }} BOOKSPACE. Hak cipta dilindungi. Proyek uji kompetensi sekolah.</p>
-            <p class="text-center sm:text-right">Pembayaran: transfer bank, QRIS &amp; COD &middot; Pengiriman: J&amp;T, JNE, SiCepat, Anteraja</p>
+            <p class="text-center sm:text-right">Pembayaran: transfer bank &amp; QRIS &middot; Pengiriman: J&amp;T, JNE, SiCepat, Anteraja</p>
         </div>
     </div>
 </footer>

@@ -120,7 +120,6 @@ Status pesanan bergerak satu arah; satu-satunya lompatan kembali adalah pembatal
 flowchart TD
     A[Keranjang] --> B[Checkout]
     B -->|"transfer / QRIS"| C[Menunggu Pembayaran]
-    B -->|COD| E[Menunggu Verifikasi]
     C -->|"unggah bukti transfer"| E
     C -->|"batal sendiri"| X[Dibatalkan]
     E -->|"admin menolak"| X
@@ -194,7 +193,7 @@ erDiagram
     PAYMENTS {
         bigint id PK
         bigint order_id FK
-        enum method "cod | transfer | qris"
+        enum method "transfer | qris"
         enum status "menunggu | menunggu_verifikasi | diterima | ditolak"
         string proof_image "disimpan di disk local (non-public)"
     }

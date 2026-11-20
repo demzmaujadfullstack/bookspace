@@ -22,7 +22,7 @@
             <ul class="list-disc pl-5 space-y-1.5">
                 <li>Satu alamat email dipakai untuk satu akun; gunakan data penerima yang benar agar paket tidak tertahan di kurir.</li>
                 <li>Harga yang tampil sudah memperhitungkan diskon judul terkait dan belum termasuk ongkos kirim, kecuali total belanja Anda melewati ambang gratis ongkir yang berlaku di halaman keranjang.</li>
-                <li>Transfer manual, QRIS, dan pembayaran di tempat (COD) sama-sama memerlukan pencocokan oleh admin sebelum pesanan diproses.</li>
+                <li>Transfer manual dan QRIS sama-sama memerlukan pencocokan oleh admin sebelum pesanan diproses.</li>
             </ul>
         </section>
 
